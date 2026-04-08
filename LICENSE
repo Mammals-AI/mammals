@@ -1,0 +1,38 @@
+Mammals — Personal AI Agent System
+Copyright (c) 2026 Gino Varisano. All rights reserved.
+
+PERSONAL USE LICENSE
+
+This software is provided under a dual-license model:
+
+1. PERSONAL USE (included with purchase)
+
+   You may:
+   - Install and run one instance of Mammals for your personal use
+   - Modify the source code for your own personal use
+   - Create custom skills, agents, and configurations
+
+   You may NOT:
+   - Redistribute, resell, sublicense, or share this software
+   - Share access to your private GitHub repository access with others
+   - Use this software to provide a service to others (SaaS)
+   - Remove or alter this license or copyright notices
+
+2. COMMERCIAL USE
+
+   Commercial use, redistribution, or resale requires a separate
+   commercial license. Contact: ginovarisano@gmail.com
+
+DISCLAIMER
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+This software requires a Claude Code subscription from Anthropic.
+The authors are not affiliated with Anthropic. Claude, Claude Code,
+and related trademarks belong to Anthropic, PBC.
