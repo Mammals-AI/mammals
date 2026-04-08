@@ -1,0 +1,37 @@
+node_modules/
+dist/
+.env
+store/
+*.log
+*.pid
+
+# Personal content (not part of core distribution)
+scripts/personal/
+skills/personal/
+
+# Editor/OS files
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+
+# Backups
+*.backup-*
+
+# HQ dashboard runtime (keep source, ignore runtime)
+workspace/pack-hq/__pycache__/
+workspace/pack-hq/certs/
+
+# Other workspace items (personal projects)
+workspace/*.html
+workspace/*.json
+workspace/*.py
+!workspace/pack-hq/
+
+# Dreams/daily notes (personal data)
+dreams/
+daily-notes/
