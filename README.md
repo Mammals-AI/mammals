@@ -1,33 +1,49 @@
 # Mammals
 
-A personal AI agent system that runs on your Mac and talks to you through Telegram.
+A personal AI agent system that runs on your Mac. Chat through the HQ web dashboard from any device, or use Telegram as a mobile fallback.
 
-Mammals gives you a persistent Claude Code session with multi-agent support, voice I/O, a web dashboard, semantic memory, and a skill system — all running locally on your machine.
+Mammals gives you a persistent Claude Code session with multi-agent support, voice I/O, semantic memory, a skill system, and a full command center — all running locally on your machine.
 
 ## What You Get
 
-- **Telegram bot** — Chat with Claude from anywhere, hands-free with voice
+- **Mammals HQ** — Your command center. A full web dashboard for chatting, managing agents, configuring settings, viewing memory, and monitoring everything. Accessible from any device on your network (or anywhere via Tailscale).
 - **Multi-agent system** — Spin up specialist agents (auto-named after animals) for parallel tasks
-- **Semantic memory** — The bot remembers context across conversations
+- **Semantic memory** — The bot remembers context across conversations with hybrid search and salience decay
 - **Skill system** — Teach it repeatable workflows as markdown files
-- **HQ Dashboard** — Web UI for agent management, memory, settings
 - **Voice I/O** — Speak to it, hear it respond (Voxtral local TTS or ElevenLabs)
+- **Telegram integration** — Optional mobile interface for chatting on the go
 - **Scheduled tasks** — Cron-based automation (heartbeat, daily notes, custom jobs)
 - **Knowledge graph** — Entities, relations, facts tracked across conversations
-- **Remote access** — Works from anywhere via Tailscale
+- **Remote access** — Access HQ from anywhere via Tailscale
+
+## How You Interact
+
+**Primary: Mammals HQ (web dashboard)**
+- Chat with your AI directly from the browser
+- Switch between agents, view their work logs and status
+- Configure voice, model settings, generation preferences
+- Manage memory, skills, and scheduled tasks
+- Access from phone, tablet, or laptop via Tailscale
+
+**Secondary: Telegram**
+- Chat on the go when you're away from a browser
+- Send voice messages for hands-free interaction
+- Receive alerts from scheduled tasks and agents
+- All the same capabilities as HQ, just in a chat interface
 
 ## Requirements
 
 - **macOS** (Apple Silicon or Intel)
 - **Node.js 20+**
+- **Python 3** (for HQ dashboard)
 - **Claude Code CLI** — [Install](https://docs.anthropic.com/en/docs/claude-code/overview)
-- **Telegram account** — Free
+- **Telegram account** — Free (for mobile access)
 
 ## Quick Start
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-username/mammals.git
+git clone https://github.com/ginovarisano/mammals.git
 cd mammals
 
 # Install dependencies
@@ -37,83 +53,84 @@ npm install
 npm run setup
 ```
 
-The setup wizard walks you through:
-1. Checking requirements (Node, Claude CLI, SQLite)
-2. Creating your Telegram bot via @BotFather
-3. Setting up Tailscale for remote access (optional)
-4. Configuring voice features (optional)
-5. Building and installing as a background service
+The setup wizard walks you through everything — no coding required:
+1. Checking requirements (Node, Claude CLI, Python, SQLite)
+2. Signing into Claude Code
+3. Setting your name and identity
+4. Creating your Telegram bot via @BotFather
+5. Setting up Tailscale for remote access (optional)
+6. Configuring voice features (optional)
+7. Building, installing as a background service, and starting HQ
 
 ## Architecture
 
+For a full technical deep-dive with diagrams, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ```
 mammals/
-├── src/                  # TypeScript source
+├── src/                  # TypeScript source (30 modules)
 │   ├── index.ts          # Entry point — starts all services
 │   ├── bot.ts            # Telegram bot (Grammy)
 │   ├── agent.ts          # Claude Code CLI subprocess runner
 │   ├── agents.ts         # Multi-agent framework
-│   ├── api.ts            # HTTP API server (port 5062)
-│   ├── dashboard.ts      # Mission Control server (port 5075)
-│   ├── memory.ts         # Semantic/episodic memory with vector search
+│   ├── api.ts            # HTTP API server
+│   ├── dashboard.ts      # Mission Control + SSE event stream
+│   ├── memory.ts         # Hybrid memory (FTS5 + vector search)
 │   ├── voice.ts          # STT (Groq Whisper) + TTS (Voxtral/ElevenLabs)
 │   ├── scheduler.ts      # Cron job engine
 │   ├── skills.ts         # Markdown skill system
 │   ├── db.ts             # SQLite persistence (30+ tables)
-│   └── ...               # Config, formatting, devices, etc.
-├── scripts/              # Core automation scripts
-│   ├── setup.ts          # Setup wizard
-│   ├── voxtral_server.py # Local TTS server
-│   ├── daily-note.py     # Daily planning notes
-│   └── ...               # Heartbeat, knowledge graph, etc.
-├── skills/               # Skill library (markdown files)
-├── store/                # SQLite database + config
+│   └── ...               # Config, formatting, devices, security, etc.
 ├── workspace/
-│   └── pack-hq/          # HQ Dashboard (Flask web UI)
-├── dist/                 # Compiled JavaScript
+│   └── pack-hq/          # Mammals HQ Dashboard (Flask)
+│       ├── app.py        # Web server
+│       ├── index.html    # Single-page UI
+│       └── avatars/      # Agent avatar images (40 animals)
+├── scripts/              # Automation + setup
+├── skills/               # Skill library (markdown files)
+├── store/                # SQLite database (created at runtime)
 ├── .env.example          # Configuration template
 ├── CLAUDE.md.dist        # System prompt template
-└── package.json
+├── ARCHITECTURE.md       # Full technical reference
+└── LICENSE               # Personal use license
 ```
 
 ## Services
 
 | Service | Default Port | Description |
 |---------|-------------|-------------|
-| Telegram Bot | — | Grammy bot, always connected |
-| HTTP API | 5062 | REST API for external clients |
-| Mission Control | 5075 | Dashboard + SSE event stream |
-| HQ Dashboard | 5067 | Flask web UI (workspace/pack-hq) |
-| Voxtral TTS | 5090 | Local text-to-speech server |
+| **Mammals HQ** | 5067 | Primary interface — web dashboard |
+| HTTP API | 5062 | Backend REST API |
+| Mission Control | 5075 | SSE event stream + data endpoints |
+| Telegram Bot | — | Mobile chat interface |
+| Voxtral TTS | 5090 | Local text-to-speech (optional) |
 
-All ports are configurable via `.env`.
+All ports configurable via `.env`.
 
 ## Agents
 
-Agents are specialist Claude Code sessions with their own system prompts, memory, and persistent sessions.
+Agents are specialist Claude Code sessions with their own identity, memory, and persistent sessions.
 
+Create them from HQ or Telegram:
 ```
-# Create an agent
-/agent create "Monitors crypto prices and alerts on big moves"
+/agent create "Researches topics and summarizes findings"
+→ Agent "wolf" created
 
-# It auto-assigns an animal name, e.g. "wolf"
-# Send it a task
-/agent wolf check BTC price action today
-
-# List agents
-/agents list
+/agent wolf look into the latest developments in local AI models
+→ [wolf] On it.
 ```
 
-Agents feature:
+Features:
 - Auto-assigned animal code names (40 animals)
-- Task queuing (messages queue while agent is busy)
+- Task queuing with side-replies (agent acknowledges while busy)
 - Stuck detection (loop, stall, hang — auto-recovery)
 - Work logging and token tracking
 - Cross-agent communication
+- Persistent sessions across restarts
 
 ## Skills
 
-Skills are markdown files that teach the bot repeatable workflows:
+Markdown files that teach the bot repeatable workflows:
 
 ```markdown
 ---
@@ -127,29 +144,29 @@ description: Deploy an Astro site to Cloudflare Pages
 3. Verify the deployment URL works
 ```
 
-Place skill files in `skills/` — they're automatically loaded and matched by trigger keywords.
+Drop skill files in `skills/` — automatically loaded and matched by trigger keywords.
 
 ## Voice
-
-Two TTS options:
 
 **Voxtral (local, free)** — Runs on your Mac, 20 voices, configurable temperature/sampling:
 ```bash
 python3 scripts/voxtral_server.py
 ```
 
-**ElevenLabs (cloud, paid)** — Higher quality, requires API key.
+**ElevenLabs (cloud, paid)** — Higher quality, requires API key. Used as fallback.
 
-STT uses Groq's Whisper API (free tier available).
+**Groq Whisper (STT)** — Free tier for voice message transcription.
+
+Configure voice settings directly in HQ under the Technical page.
 
 ## Configuration
 
-Copy `.env.example` to `.env` and fill in your values. See the file for full documentation of all options.
+Copy `.env.example` to `.env` and fill in your values — or just run `npm run setup` and the wizard handles it.
 
 Key variables:
-- `BOT_OWNER` — Your name (used in agent prompts)
+- `BOT_OWNER` — Your name
 - `TELEGRAM_BOT_TOKEN` — From @BotFather
-- `ALLOWED_CHAT_ID` — Your Telegram user ID
+- `ALLOWED_CHAT_ID` — Auto-detected on first message
 
 ## Managing the Service
 
@@ -170,4 +187,5 @@ npm start
 
 ## License
 
-MIT
+Personal Use License — see [LICENSE](LICENSE) for details.
+Copyright (c) 2026 Gino Varisano. All rights reserved.
