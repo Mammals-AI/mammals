@@ -43,7 +43,7 @@ Mammals gives you a persistent Claude Code session with multi-agent support, voi
 
 ```bash
 # Clone the repo
-git clone https://github.com/ginovarisano/mammals.git
+git clone https://github.com/Mammals-AI/mammals.git
 cd mammals
 
 # Install dependencies

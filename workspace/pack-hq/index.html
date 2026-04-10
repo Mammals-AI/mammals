@@ -856,7 +856,14 @@ select.form-input { cursor: pointer; }
     <img id="tb-av" class="tb-av" src="/icon.png?v=2" onclick="openAgentDetail()">
     <div class="tb-info" onclick="openAgentDetail()">
       <div id="tb-name" class="tb-name">Daemon</div>
-      <div id="tb-desc" class="tb-desc">Main assistant</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div id="tb-desc" class="tb-desc" style="flex:1">Main assistant</div>
+        <select id="tb-model" onclick="event.stopPropagation()" onchange="setChatModel(this.value)" style="padding:1px 4px;font-size:10px;border-radius:4px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;outline:none;min-width:58px">
+          <option value="opus">Opus</option>
+          <option value="sonnet">Sonnet</option>
+          <option value="haiku">Haiku</option>
+        </select>
+      </div>
     </div>
     <div class="tb-tabs">
       <button class="tb-tab active" data-view="chat" onclick="switchMain('chat')">Chat</button>
@@ -958,6 +965,19 @@ select.form-input { cursor: pointer; }
           </div>
           <div id="recs-feed"></div>
         </div>
+        <!-- Pack Journal -->
+        <div class="recs-section" style="margin-top:16px">
+          <div class="recs-header">
+            <span class="hq-section-title">Pack Journal</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <select id="j-agent-filter" onchange="filterJournalAgent()" style="padding:3px 8px;font-size:11px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);outline:none">
+                <option value="">All agents</option>
+              </select>
+            </div>
+          </div>
+          <div id="journal-feed" style="min-height:40px"></div>
+          <button id="j-more" class="btn btn-ghost btn-sm hidden" onclick="loadMoreJournal()" style="margin:8px auto;display:block">Load more</button>
+        </div>
       </div>
       <!-- Agent profile (shown when an agent is clicked) -->
       <div id="agent-profile-view" class="agent-profile-view hidden">
@@ -986,32 +1006,130 @@ select.form-input { cursor: pointer; }
         <div id="tech-status" style="margin-bottom:12px"></div>
         <div class="dash-grid" id="tech-cards"></div>
       </div>
-      <!-- Model -->
+      <!-- Performance -->
       <div class="settings-group">
-        <div class="settings-group-title">Model</div>
+        <div class="settings-group-title">Performance</div>
+        <!-- Direct chat model -->
         <div class="setting-row">
           <div>
-            <div class="setting-label">Model</div>
-            <div class="setting-hint">Which Claude model to use</div>
+            <div class="setting-label">Direct Chat</div>
+            <div class="setting-hint">Model for your conversations</div>
           </div>
-          <div class="setting-control" id="set-model">
-            <button class="seg-btn" data-val="haiku" onclick="setModel(this)">Haiku</button>
-            <button class="seg-btn" data-val="sonnet" onclick="setModel(this)">Sonnet</button>
-            <button class="seg-btn active" data-val="opus" onclick="setModel(this)">Opus</button>
+          <div class="setting-control" id="set-model-chat">
+            <button class="seg-btn" data-val="haiku" onclick="setPerf('chat','model',this)">Haiku</button>
+            <button class="seg-btn" data-val="sonnet" onclick="setPerf('chat','model',this)">Sonnet</button>
+            <button class="seg-btn active" data-val="opus" onclick="setPerf('chat','model',this)">Opus</button>
           </div>
         </div>
         <div class="setting-row">
           <div>
-            <div class="setting-label">Effort</div>
-            <div class="setting-hint">Thinking depth per response</div>
+            <div class="setting-label" style="color:var(--muted);padding-left:12px">Effort</div>
           </div>
-          <div class="setting-control" id="set-effort">
-            <button class="seg-btn" data-val="low" onclick="setEffort(this)">Low</button>
-            <button class="seg-btn" data-val="medium" onclick="setEffort(this)">Medium</button>
-            <button class="seg-btn active" data-val="high" onclick="setEffort(this)">High</button>
+          <div class="setting-control" id="set-effort-chat">
+            <button class="seg-btn" data-val="low" onclick="setPerf('chat','effort',this)">Low</button>
+            <button class="seg-btn" data-val="medium" onclick="setPerf('chat','effort',this)">Medium</button>
+            <button class="seg-btn active" data-val="high" onclick="setPerf('chat','effort',this)">High</button>
           </div>
         </div>
-        <div id="model-status" style="padding:0 14px 10px;font-size:11px;color:var(--muted)"></div>
+        <!-- Agent tasks -->
+        <div class="setting-row" style="border-top:1px solid var(--border)">
+          <div>
+            <div class="setting-label">Agent Tasks</div>
+            <div class="setting-hint">Model for ferret, mink, wolverine, etc.</div>
+          </div>
+          <div class="setting-control" id="set-model-agents">
+            <button class="seg-btn" data-val="haiku" onclick="setPerf('agents','model',this)">Haiku</button>
+            <button class="seg-btn active" data-val="sonnet" onclick="setPerf('agents','model',this)">Sonnet</button>
+            <button class="seg-btn" data-val="opus" onclick="setPerf('agents','model',this)">Opus</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label" style="color:var(--muted);padding-left:12px">Effort</div>
+          </div>
+          <div class="setting-control" id="set-effort-agents">
+            <button class="seg-btn" data-val="low" onclick="setPerf('agents','effort',this)">Low</button>
+            <button class="seg-btn active" data-val="medium" onclick="setPerf('agents','effort',this)">Medium</button>
+            <button class="seg-btn" data-val="high" onclick="setPerf('agents','effort',this)">High</button>
+          </div>
+        </div>
+        <!-- Background tasks -->
+        <div class="setting-row" style="border-top:1px solid var(--border)">
+          <div>
+            <div class="setting-label">Background Tasks</div>
+            <div class="setting-hint">Heartbeat, logging, memory triage</div>
+          </div>
+          <div class="setting-control" id="set-model-background">
+            <button class="seg-btn active" data-val="haiku" onclick="setPerf('background','model',this)">Haiku</button>
+            <button class="seg-btn" data-val="sonnet" onclick="setPerf('background','model',this)">Sonnet</button>
+            <button class="seg-btn" data-val="opus" onclick="setPerf('background','model',this)">Opus</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label" style="color:var(--muted);padding-left:12px">Effort</div>
+          </div>
+          <div class="setting-control" id="set-effort-background">
+            <button class="seg-btn active" data-val="low" onclick="setPerf('background','effort',this)">Low</button>
+            <button class="seg-btn" data-val="medium" onclick="setPerf('background','effort',this)">Medium</button>
+            <button class="seg-btn" data-val="high" onclick="setPerf('background','effort',this)">High</button>
+          </div>
+        </div>
+        <!-- Off-peak scheduling -->
+        <div class="setting-row" style="border-top:1px solid var(--border)">
+          <div>
+            <div class="setting-label">Off-Peak Mode</div>
+            <div class="setting-hint">Run heavy tasks during off-peak hours to reduce load</div>
+          </div>
+          <div class="setting-control">
+            <button class="seg-btn" id="offpeak-toggle" onclick="toggleOffpeak()" data-val="off">Off</button>
+          </div>
+        </div>
+        <div id="offpeak-options" style="display:none">
+          <div class="setting-row">
+            <div>
+              <div class="setting-label" style="padding-left:12px">Peak Hours</div>
+              <div class="setting-hint" style="padding-left:12px">Use lighter models during these hours</div>
+            </div>
+            <div class="setting-control" style="gap:6px;align-items:center">
+              <select id="offpeak-start" class="form-input" onchange="savePerfConfig()" style="width:auto;min-width:70px;padding:5px 8px;font-size:12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text)">
+                <option value="6">6am</option><option value="7">7am</option><option value="8">8am</option>
+                <option value="9" selected>9am</option><option value="10">10am</option><option value="11">11am</option>
+              </select>
+              <span style="color:var(--muted);font-size:12px">to</span>
+              <select id="offpeak-end" class="form-input" onchange="savePerfConfig()" style="width:auto;min-width:70px;padding:5px 8px;font-size:12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text)">
+                <option value="17">5pm</option><option value="18">6pm</option><option value="19">7pm</option>
+                <option value="20">8pm</option><option value="21" selected>9pm</option><option value="22">10pm</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <div class="setting-label" style="padding-left:12px">Peak Model Override</div>
+              <div class="setting-hint" style="padding-left:12px">Agents &amp; background drop to this during peak</div>
+            </div>
+            <div class="setting-control" id="set-peak-model">
+              <button class="seg-btn" data-val="haiku" onclick="setPeakModel(this)">Haiku</button>
+              <button class="seg-btn active" data-val="sonnet" onclick="setPeakModel(this)">Sonnet</button>
+            </div>
+          </div>
+        </div>
+        <div id="perf-status" style="padding:0 14px 10px;font-size:11px;color:var(--muted)"></div>
+      </div>
+      <!-- Security -->
+      <div class="settings-group">
+        <div class="settings-group-title">Security</div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">HQ PIN</div>
+            <div class="setting-hint" id="pin-hint">Require a PIN to access the dashboard</div>
+          </div>
+          <div class="setting-control" style="gap:8px;align-items:center">
+            <input type="text" id="pin-input" placeholder="No PIN set" style="width:120px;padding:5px 10px;font-size:12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'SF Mono',monospace;letter-spacing:2px">
+            <button class="seg-btn" id="pin-save-btn" onclick="savePin()">Save</button>
+            <button class="seg-btn" id="pin-clear-btn" onclick="clearPin()" style="color:var(--muted)">Disable</button>
+          </div>
+        </div>
       </div>
       <!-- Voice / TTS -->
       <div class="settings-group">
@@ -1163,6 +1281,12 @@ select.form-input { cursor: pointer; }
         <div class="settings-group-title">Event Stream</div>
         <div id="live-events" class="live-events"></div>
       </div>
+      <!-- Support -->
+      <div style="margin-top:20px;padding:20px;border-radius:var(--radius);background:rgba(249,115,22,0.04);border:1px solid rgba(249,115,22,0.12);text-align:center">
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Enjoying Mammals?</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Mammals is free and open. If it's useful to you, consider supporting development.</div>
+        <a href="https://letsgodaemon.gumroad.com/l/mammals" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border-radius:10px;background:var(--accent);color:#fff;font-size:13px;font-weight:600;text-decoration:none;transition:all 0.2s;box-shadow:0 2px 8px rgba(249,115,22,0.25)">Support Mammals</a>
+      </div>
     </div>
   </section>
   </section>
@@ -1207,7 +1331,7 @@ function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.
 function linkify(s) {
   const safe = esc(s);
   // First: convert local file paths to serveable URLs
-  let out = safe.replace(/\/Users\/ginovarisano\/claudeclaw\/workspace\/uploads\/((?:(?!&lt;|&amp;|\s).)+)/g, (m, file) => {
+  let out = safe.replace(/\/Users\/[^/]+\/(?:claudeclaw|mammals)\/workspace\/uploads\/((?:(?!&lt;|&amp;|\s).)+)/g, (m, file) => {
     const url = '/uploads/' + file;
     if (/\.(png|jpe?g|gif|webp|svg|bmp)(\?.*)?$/i.test(file)) {
       return `<a href="${url}" target="_blank" rel="noopener"><img class="chat-img" src="${url}" alt="image"></a>`;
@@ -1464,6 +1588,18 @@ function selectAgent(name) {
   const a = name === 'daemon' ? {description:'Main assistant'} : name === 'claude' ? {description:'Raw Claude Code session'} : allAgents.find(x => x.name === name) || {};
   document.getElementById('tb-name').textContent = name === 'daemon' ? 'Daemon' : name === 'claude' ? 'Claude Code' : name;
   document.getElementById('tb-desc').textContent = a.description || '';
+  // Set model dropdown based on category
+  const modelSel = document.getElementById('tb-model');
+  const perfCfg = window._perfConfig || {};
+  if (name === 'daemon') {
+    modelSel.value = (perfCfg.chat || {}).model || 'opus';
+  } else if (name === 'claude') {
+    modelSel.value = (perfCfg.chat || {}).model || 'opus';
+  } else {
+    // Check agent-specific override first, then fall back to agents category
+    const agentOverride = (perfCfg.agent_overrides || {})[name];
+    modelSel.value = agentOverride || (perfCfg.agents || {}).model || 'sonnet';
+  }
   const av = document.getElementById('tb-av');
   av.src = name === 'daemon' ? '/icon.png?v=2' : `/avatars/${name}.png`;
   av.onerror = () => { av.src = '/icon.png?v=2'; };
@@ -2194,7 +2330,7 @@ chatMsgs.addEventListener('drop', e => {
 
 // ═══════════ HQ: OVERVIEW ═══════════
 // ═══════════ JOURNAL ═══════════
-let journalFilter = '';
+let journalFilter = 'journal';  // default to journal-only (skip auto noise)
 let journalAgentFilter = '';
 let journalOffset = 0;
 let journalLoaded = false;
@@ -2293,11 +2429,12 @@ async function loadJournalFeed(append) {
   const agent = journalAgentFilter;
   let url = `feed?limit=30&offset=${journalOffset}`;
   if (type) url += `&type=${type}`;
+  if (agent) url += `&agent=${encodeURIComponent(agent)}`;
   try {
     const data = await api(url);
-    let posts = data.posts || [];
-    if (agent) posts = posts.filter(p => p.agent_name === agent);
+    const posts = data.posts || [];
     const el = document.getElementById('journal-feed');
+    if (!el) return;
     const html = posts.map(p => {
       const avSrc = (!p.agent_name || p.agent_name === 'daemon') ? '/icon.png?v=2' : `/avatars/${p.agent_name}.png`;
       const bodyLong = (p.body || '').length > 120;
@@ -2313,10 +2450,12 @@ async function loadJournalFeed(append) {
       </div>`;
     }).join('');
     if (append) el.innerHTML += html;
-    else el.innerHTML = html || '<div class="empty" style="padding:20px">No entries yet</div>';
-    document.getElementById('j-more').classList.toggle('hidden', posts.length < 30);
+    else el.innerHTML = html || '<div class="empty" style="padding:20px">No journal entries yet</div>';
+    const moreBtn = document.getElementById('j-more');
+    if (moreBtn) moreBtn.classList.toggle('hidden', posts.length < 30);
   } catch {
-    if (!append) document.getElementById('journal-feed').innerHTML = '<div class="empty" style="padding:20px">Failed to load journal</div>';
+    const el = document.getElementById('journal-feed');
+    if (el && !append) el.innerHTML = '<div class="empty" style="padding:20px">Failed to load journal</div>';
   }
 }
 
@@ -2326,11 +2465,12 @@ function loadMoreJournal() {
 }
 
 function filterJournal(type) {
-  journalFilter = type === 'all' ? '' : type;
+  journalFilter = (type === 'all') ? '' : type;
   journalOffset = 0;
   document.querySelectorAll('.j-filters .ft').forEach(b => b.classList.toggle('active', b.dataset.jf === type));
   loadJournalFeed(false);
 }
+
 
 function filterJournalAgent() {
   journalAgentFilter = document.getElementById('j-agent-filter').value;
@@ -2376,16 +2516,44 @@ async function loadTechnical() {
   // Settings
   try {
     if (settings) {
-      document.querySelectorAll('#set-model .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === settings.model.model));
-      document.querySelectorAll('#set-effort .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === settings.model.effort));
-      document.getElementById('model-status').textContent = `Current: ${settings.model.model} / ${settings.model.effort}`;
+      // Load performance config
+      const perf = settings.performance || {};
+      window._perfConfig = perf;
+      const chat = perf.chat || settings.model || {model:'opus',effort:'high'};
+      const agents = perf.agents || {model:'sonnet',effort:'medium'};
+      const bg = perf.background || {model:'haiku',effort:'low'};
+      const offpeak = perf.offpeak || {enabled:false,peak_start:9,peak_end:21,peak_model:'sonnet'};
+      document.querySelectorAll('#set-model-chat .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === chat.model));
+      document.querySelectorAll('#set-effort-chat .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === chat.effort));
+      document.querySelectorAll('#set-model-agents .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === agents.model));
+      document.querySelectorAll('#set-effort-agents .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === agents.effort));
+      document.querySelectorAll('#set-model-background .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === bg.model));
+      document.querySelectorAll('#set-effort-background .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === bg.effort));
+      const opToggle = document.getElementById('offpeak-toggle');
+      if (offpeak.enabled) { opToggle.dataset.val = 'on'; opToggle.textContent = 'On'; opToggle.classList.add('active'); document.getElementById('offpeak-options').style.display = ''; }
+      document.getElementById('offpeak-start').value = offpeak.peak_start || 9;
+      document.getElementById('offpeak-end').value = offpeak.peak_end || 21;
+      document.querySelectorAll('#set-peak-model .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === (offpeak.peak_model||'sonnet')));
+      // Set topbar model dropdown for current chat target
+      const tbModel = document.getElementById('tb-model');
+      const curTarget = chatTarget || 'daemon';
+      if (curTarget === 'daemon' || curTarget === 'claude') {
+        tbModel.value = chat.model;
+      } else {
+        const agentOvr = (perf.agent_overrides || {})[curTarget];
+        tbModel.value = agentOvr || agents.model;
+      }
       const skillsEl = document.getElementById('skills-list');
       if (skillsEl) skillsEl.innerHTML = (settings.skills||[]).length ? settings.skills.map(s => `
         <div class="skill-row"><span class="skill-name">${esc(s.name)}</span><span class="skill-cat">${esc(s.category)}</span><span class="skill-uses">${s.times_used}x</span></div>
       `).join('') : '<div style="padding:12px;color:var(--muted);font-size:12px">No skills</div>';
       const tasksEl = document.getElementById('tasks-list');
       if (tasksEl) tasksEl.innerHTML = (settings.tasks||[]).length ? settings.tasks.map(t => `
-        <div class="skill-row"><span class="skill-name">${esc(trunc(t.prompt||'',50))}</span><span class="skill-cat">${esc(t.schedule||'')}</span><span class="skill-uses" style="color:${t.status==='active'?'var(--green)':'var(--muted)'}">${t.status}</span></div>
+        <div class="skill-row" style="flex-wrap:wrap;gap:6px">
+          <span class="skill-name" style="flex:1;min-width:120px">${esc(trunc(t.prompt||'',50))}</span>
+          <input type="text" value="${esc(t.schedule||'')}" onchange="updateTaskSchedule('${t.id}',this.value)" style="width:140px;padding:3px 8px;font-size:11px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'SF Mono',monospace" title="Cron schedule">
+          <button class="seg-btn" style="font-size:10px;padding:3px 10px;color:${t.status==='active'?'var(--green)':'var(--muted)'}" onclick="toggleTask('${t.id}','${t.status}')">${t.status==='active'?'Active':'Paused'}</button>
+        </div>
       `).join('') : '<div style="padding:12px;color:var(--muted);font-size:12px">No tasks</div>';
       const portsEl = document.getElementById('ports-list');
       if (portsEl) portsEl.innerHTML = Object.entries(settings.ports||{}).map(([p,n]) =>
@@ -2393,6 +2561,18 @@ async function loadTechnical() {
       ).join('');
     }
   } catch(e) { console.error('Settings load error:', e); }
+  // Load PIN status
+  try {
+    const authInfo = await api('auth/check').catch(() => null);
+    if (authInfo) {
+      const pinInput = document.getElementById('pin-input');
+      if (authInfo.pin_enabled) {
+        pinInput.placeholder = '••••  (PIN is set)';
+      } else {
+        pinInput.placeholder = 'No PIN set';
+      }
+    }
+  } catch(e) {}
   // These always run even if settings fails
   loadIssues();
   loadVoiceConfig();
@@ -2692,34 +2872,106 @@ function filterKG(cat) {
 // ═══════════ HQ: LIVE ═══════════
 let liveSSE = null;
 
-async function setModel(btn) {
-  const model = btn.dataset.val;
-  const effort = document.querySelector('#set-effort .seg-btn.active')?.dataset.val || 'high';
-  await saveModelConfig(model, effort);
+async function setPerf(category, field, btn) {
+  // Update UI
+  const prefix = field === 'model' ? 'set-model-' : 'set-effort-';
+  document.querySelectorAll(`#${prefix}${category} .seg-btn`).forEach(b => b.classList.toggle('active', b === btn));
+  await savePerfConfig();
 }
-async function setEffort(btn) {
-  const effort = btn.dataset.val;
-  const model = document.querySelector('#set-model .seg-btn.active')?.dataset.val || 'opus';
-  await saveModelConfig(model, effort);
+function toggleOffpeak() {
+  const btn = document.getElementById('offpeak-toggle');
+  const on = btn.dataset.val !== 'on';
+  btn.dataset.val = on ? 'on' : 'off';
+  btn.textContent = on ? 'On' : 'Off';
+  btn.classList.toggle('active', on);
+  document.getElementById('offpeak-options').style.display = on ? '' : 'none';
+  savePerfConfig();
 }
-async function saveModelConfig(model, effort) {
-  const status = document.getElementById('model-status');
+function setPeakModel(btn) {
+  document.querySelectorAll('#set-peak-model .seg-btn').forEach(b => b.classList.toggle('active', b === btn));
+  savePerfConfig();
+}
+async function savePerfConfig() {
+  const status = document.getElementById('perf-status');
   status.textContent = 'Saving...';
+  const getActive = (id) => document.querySelector(`#${id} .seg-btn.active`)?.dataset.val;
+  const config = {
+    chat: { model: getActive('set-model-chat') || 'opus', effort: getActive('set-effort-chat') || 'high' },
+    agents: { model: getActive('set-model-agents') || 'sonnet', effort: getActive('set-effort-agents') || 'medium' },
+    background: { model: getActive('set-model-background') || 'haiku', effort: getActive('set-effort-background') || 'low' },
+    offpeak: {
+      enabled: document.getElementById('offpeak-toggle').dataset.val === 'on',
+      peak_start: parseInt(document.getElementById('offpeak-start').value),
+      peak_end: parseInt(document.getElementById('offpeak-end').value),
+      peak_model: getActive('set-peak-model') || 'sonnet'
+    }
+  };
   try {
-    const res = await api('settings/model', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({model, effort})
-    });
+    const res = await api('settings/performance', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(config) });
     if (res.error) throw new Error(res.error);
-    document.querySelectorAll('#set-model .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === model));
-    document.querySelectorAll('#set-effort .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === effort));
-    status.textContent = `Saved: ${model} / ${effort}`;
+    status.textContent = 'Saved';
     status.style.color = 'var(--green)';
-    setTimeout(() => { status.style.color = ''; }, 2000);
-  } catch (e) {
+    setTimeout(() => { status.textContent = ''; status.style.color = ''; }, 2000);
+  } catch(e) {
     status.textContent = 'Failed to save';
     status.style.color = 'var(--red)';
   }
+}
+async function updateTaskSchedule(id, schedule) {
+  try {
+    const res = await api('settings/task', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id, schedule}) });
+    if (!res.ok) alert('Failed to update schedule');
+  } catch(e) { alert('Error updating schedule'); }
+}
+async function toggleTask(id, currentStatus) {
+  const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+  try {
+    const res = await api('settings/task', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id, status: newStatus}) });
+    if (res.ok) loadTechnical();
+  } catch(e) { alert('Error toggling task'); }
+}
+
+async function setChatModel(model) {
+  // Set model for the currently selected agent/chat
+  const name = chatTarget || 'daemon';
+  if (name === 'daemon' || name === 'claude') {
+    // Update chat category
+    const perfCfg = window._perfConfig || {};
+    perfCfg.chat = perfCfg.chat || {};
+    perfCfg.chat.model = model;
+    window._perfConfig = perfCfg;
+    // Also update the Performance settings UI if visible
+    document.querySelectorAll('#set-model-chat .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.val === model));
+    await api('settings/performance', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(perfCfg) });
+  } else {
+    // Agent-specific override
+    const perfCfg = window._perfConfig || {};
+    perfCfg.agent_overrides = perfCfg.agent_overrides || {};
+    perfCfg.agent_overrides[name] = model;
+    window._perfConfig = perfCfg;
+    await api('settings/performance', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(perfCfg) });
+  }
+}
+
+async function savePin() {
+  const pin = document.getElementById('pin-input').value.trim();
+  if (pin && pin.length < 4) { document.getElementById('pin-hint').textContent = 'PIN must be at least 4 characters'; document.getElementById('pin-hint').style.color = 'var(--red)'; return; }
+  try {
+    const res = await api('settings/pin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({pin}) });
+    const hint = document.getElementById('pin-hint');
+    if (res.ok) {
+      hint.textContent = pin ? 'PIN updated — takes effect on next login' : 'PIN disabled';
+      hint.style.color = 'var(--green)';
+    } else {
+      hint.textContent = res.error || 'Failed to save';
+      hint.style.color = 'var(--red)';
+    }
+    setTimeout(() => { hint.textContent = 'Require a PIN to access the dashboard'; hint.style.color = ''; }, 3000);
+  } catch(e) { console.error(e); }
+}
+async function clearPin() {
+  document.getElementById('pin-input').value = '';
+  await savePin();
 }
 
 function startLiveStream() {
@@ -2964,7 +3216,7 @@ async function loadAgentsPanel() {
 
     // Inject daemon as a virtual agent at the top
     const daemonEntry = {
-      name: 'daemon', description: "Gino's personal AI assistant", bio: '',
+      name: 'daemon', description: "Main AI assistant", bio: '',
       total_runs: 0, total_tokens_in: 0, total_tokens_out: 0,
       last_active: now, created_at: 0
     };
@@ -2996,7 +3248,19 @@ async function loadAgentsPanel() {
     }).join('');
 
     loadRecommendations();
+    loadPackJournal();
   } catch {}
+}
+
+async function loadPackJournal() {
+  // Populate agent filter dropdown
+  const filterSel = document.getElementById('j-agent-filter');
+  if (filterSel) {
+    const agents = [{name:'daemon'}, ...allAgents];
+    filterSel.innerHTML = '<option value="">All agents</option>' + agents.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
+  }
+  journalOffset = 0;
+  await loadJournalFeed(false);
 }
 
 async function loadRecommendations() {
@@ -3066,7 +3330,7 @@ async function openAgentProfilePanel(name) {
         <img class="aph-av" src="${src}">
         <div class="aph-info">
           <div class="aph-name">Daemon</div>
-          <div class="aph-desc">${esc(cfg.description || "Gino's personal AI assistant")}</div>
+          <div class="aph-desc">${esc(cfg.description || "Main AI assistant")}</div>
           <div class="aph-stats">
             <span><strong>${usage.daemon_messages_today}</strong> msgs today</span>
             <span><strong>${sessPct}%</strong> session</span>
@@ -3137,7 +3401,7 @@ function renderProfileTab(data) {
           const snippet = (m.content || '').slice(0, 200);
           return `<div class="session-card" style="border-left:3px solid ${isUser ? 'var(--accent)' : 'var(--muted)'}">
             <div class="session-head">
-              <div class="session-summary" style="font-size:12px">${isUser ? '<strong style="color:var(--accent)">Gino</strong>' : '<strong>Daemon</strong>'}</div>
+              <div class="session-summary" style="font-size:12px">${isUser ? '<strong style="color:var(--accent)">You</strong>' : '<strong>Daemon</strong>'}</div>
               <div class="session-time">${fmtDate(m.ts)}</div>
             </div>
             <div style="font-size:12px;color:var(--text2);white-space:pre-wrap">${esc(snippet)}${m.content && m.content.length > 200 ? '...' : ''}</div>

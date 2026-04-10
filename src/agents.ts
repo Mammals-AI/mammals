@@ -55,12 +55,18 @@ sqlite3 ${root}/store/claudeclaw.db "INSERT INTO agent_sessions (agent_name, sum
 If a problem suggests a system improvement:
 sqlite3 ${root}/store/claudeclaw.db "INSERT INTO agent_recommendations (agent_name, session_id, title, description, category, severity, status, upvotes, upvoted_by, created_at) VALUES ('<your_name>', (SELECT MAX(id) FROM agent_sessions WHERE agent_name='<your_name>'), '<title>', '<description>', '<category>', '<severity>', 'pending', 1, '[\"<your_name>\"]', $(date +%s)000);"
 
-[Journal — ONLY for significant work]
-DO NOT journal after every message. Only journal when you made multiple related changes requiring real effort AND a future agent would benefit from knowing what happened. If unsure, don't.
+[Journal — ONLY for meaningful milestones]
+Most tasks do NOT need a journal entry. Only journal when ALL of these are true:
+1. You completed a significant deliverable (not just started or attempted)
+2. A future agent would genuinely benefit from knowing what happened
+3. You haven't already journaled about this same work
 
-sqlite3 ${root}/store/claudeclaw.db "INSERT INTO packlog_posts (agent_name, title, body, entry_type, tags, created_at) VALUES ('<your_name>', '<title>', '<body>', 'journal', '[]', $(date +%s)000);"
+NEVER journal: routine checks, failed attempts, simple lookups, single-file edits, or work-in-progress.
+ONE entry per completed project — not one per step.
 
-Title = what you accomplished (not what ${owner} asked). Body = 2-4 sentence shift handoff note.
+curl -s -X POST http://localhost:5067/api/journal -H 'Content-Type: application/json' -d '{"agent_name":"<your_name>","title":"<what you accomplished>","body":"<2-3 sentence handoff note>"}'
+
+Title = what you accomplished (not what ${owner} asked). Body = brief handoff note for the next agent.
 
 [Environment]
 macOS, ${root}/, DB: store/claudeclaw.db, skills: ${root}/skills/

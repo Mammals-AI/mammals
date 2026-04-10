@@ -29,7 +29,7 @@ if env_path.exists():
             _k, _v = _line.split('=', 1)
             _env[_k.strip()] = _v.strip()
 
-PIN = _env.get('PWA_PIN', '1111')
+PIN = _env.get('PWA_PIN', '')
 API_TOKEN = _env.get('CLAUDECLAW_API_TOKEN', '')
 
 # ── Brute-force protection ──────────────────────────────
@@ -39,6 +39,8 @@ MAX_ATTEMPTS = 5
 LOCKOUT_SECONDS = 300
 
 def authed():
+    if not PIN:
+        return True
     return session.get('authenticated') is True
 
 def require_auth(f):
@@ -71,6 +73,10 @@ run_migrations()
 
 @app.route('/auth', methods=['POST'])
 def auth():
+    if not PIN:
+        session['authenticated'] = True
+        session.permanent = True
+        return jsonify({'ok': True})
     ip = request.remote_addr or '0.0.0.0'
     with _fail_lock:
         rec = _fail_counts.get(ip, {'count': 0, 'locked_until': 0})
@@ -95,7 +101,7 @@ def auth():
 
 @app.route('/auth/check')
 def auth_check():
-    return jsonify({'ok': authed()})
+    return jsonify({'ok': authed(), 'pin_enabled': bool(PIN)})
 
 # ── Static ──────────────────────────────────────────────
 
@@ -195,8 +201,9 @@ def agents():
 def agent_detail(name):
     c = db()
     if name == 'daemon':
-        agent = {'name': 'daemon', 'description': "Gino's personal AI assistant",
-                 'system_prompt': '', 'bio': 'Main bot process running on the Mac Mini via Claude Code CLI.',
+        owner = _env.get('BOT_OWNER', 'User')
+        agent = {'name': 'daemon', 'description': f"{owner}'s personal AI assistant",
+                 'system_prompt': '', 'bio': 'Main bot process running via Claude Code CLI.',
                  'total_runs': 0, 'total_tokens_in': 0, 'total_tokens_out': 0, 'created_at': 0,
                  'voice_id': _env.get('ELEVENLABS_VOICE_ID', '')}
     else:
@@ -357,12 +364,17 @@ def feed():
     c = db()
     limit = min(int(request.args.get('limit', 100)), 500)
     offset = int(request.args.get('offset', 0))
-    entry_type = request.args.get('type', '')  # 'journal', 'auto', or '' for all
-    where = ''
+    entry_type = request.args.get('type', 'journal')  # default to journal-only
+    agent = request.args.get('agent', '')
+    conditions = []
     params = []
     if entry_type:
-        where = "WHERE p.entry_type = ?"
+        conditions.append("p.entry_type = ?")
         params.append(entry_type)
+    if agent:
+        conditions.append("p.agent_name = ?")
+        params.append(agent)
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     rows = c.execute(f'''
         SELECT p.id, p.agent_name, p.title, p.body, p.artifacts, p.created_at,
                p.entry_type, p.tags, a.description as agent_desc
@@ -372,14 +384,14 @@ def feed():
         ORDER BY p.created_at DESC
         LIMIT ? OFFSET ?
     ''', params + [limit, offset]).fetchall()
-    count_where = f"WHERE entry_type = '{entry_type}'" if entry_type else ""
-    total = c.execute(f'SELECT COUNT(*) FROM packlog_posts {count_where}').fetchone()[0]
+    count_params = list(params)
+    total = c.execute(f'SELECT COUNT(*) FROM packlog_posts p {where}', count_params).fetchone()[0]
     c.close()
     return jsonify({'posts': [dict(r) for r in rows], 'total': total})
 
 @app.route('/api/journal', methods=['POST'])
 def journal_post():
-    """Post a journal entry."""
+    """Post a journal entry. Deduplicates same title+agent within 5 minutes."""
     body = request.get_json()
     agent = body.get('agent_name', 'daemon').strip()
     title = body.get('title', '').strip()
@@ -389,9 +401,18 @@ def journal_post():
         return jsonify({'error': 'title required'}), 400
     c = db()
     import time
+    now = int(time.time() * 1000)
+    # Deduplicate: skip if same agent+title posted within last 5 minutes
+    recent = c.execute(
+        'SELECT id FROM packlog_posts WHERE agent_name = ? AND title = ? AND created_at > ?',
+        (agent, title, now - 300000)
+    ).fetchone()
+    if recent:
+        c.close()
+        return jsonify({'ok': True, 'id': recent[0], 'deduplicated': True})
     c.execute(
         'INSERT INTO packlog_posts (agent_name, title, body, entry_type, tags, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-        (agent, title, content, 'journal', tags, int(time.time() * 1000))
+        (agent, title, content, 'journal', tags, now)
     )
     c.commit()
     post_id = c.execute('SELECT last_insert_rowid()').fetchone()[0]
@@ -560,7 +581,7 @@ def goals_create():
     c.execute('''
         INSERT INTO goals (id, title, description, status, priority, source, created_at, updated_at)
         VALUES (?, ?, ?, 'active', ?, ?, ?, ?)
-    ''', (gid, body['title'], body.get('description', ''), body.get('priority', 3), body.get('source', 'gino'), now, now))
+    ''', (gid, body['title'], body.get('description', ''), body.get('priority', 3), body.get('source', _env.get('BOT_OWNER', 'user')), now, now))
     c.commit()
     c.close()
     return jsonify({'id': gid}), 201
@@ -625,7 +646,7 @@ def daemon_config_get():
         return jsonify({
             'description': 'Main assistant',
             'system_prompt': content,
-            'bio': "Gino's personal AI assistant running on his Mac Mini.",
+            'bio': f"{_env.get('BOT_OWNER', 'Your')} personal AI assistant.",
             'voice_id': _env.get('ELEVENLABS_VOICE_ID', '')
         })
     except Exception as e:
@@ -970,6 +991,7 @@ def bot_stream():
 # ── API: Settings ──────────────────────────────────────
 
 MODEL_CONFIG = os.path.expanduser('~/claudeclaw/store/model-config.json')
+PERF_CONFIG = os.path.expanduser('~/claudeclaw/store/performance-config.json')
 
 @app.route('/api/settings')
 def settings_get():
@@ -1003,19 +1025,22 @@ def settings_get():
         conn.close()
     except Exception:
         pass
+    # Performance config
+    performance = {}
+    try:
+        with open(PERF_CONFIG, 'r') as f:
+            performance = json.load(f)
+    except Exception:
+        pass
+
     return jsonify({
         'model': model,
+        'performance': performance,
         'skills': skills,
         'tasks': tasks,
         'ports': {
-            5050: 'Solar Dashboard',
-            5051: 'Crypto Bot',
-            5055: 'Display Events',
-            5056: 'ClaudeClaw Display',
-            5060: 'RESERVED',
-            5065: 'Daemon PWA',
+            5062: 'HTTP API',
             5067: 'Mammals HQ',
-            5070: 'RESERVED',
             5075: 'Command Center',
             5090: 'Voxtral TTS',
         }
@@ -1118,12 +1143,21 @@ def usage_stats():
 import socket
 
 KNOWN_PORTS = [
-    {'port': 5050, 'name': 'Solar Dashboard', 'path': ''},
-    {'port': 5051, 'name': 'Crypto Bot', 'path': ''},
+    {'port': 5062, 'name': 'HTTP API', 'path': ''},
     {'port': 5067, 'name': 'Mammals HQ', 'path': ''},
+    {'port': 5075, 'name': 'Command Center', 'path': ''},
     {'port': 5090, 'name': 'Voxtral TTS', 'path': ''},
 ]
-TAILSCALE_IP = '100.73.175.93'
+
+def _get_tailscale_ip():
+    """Detect Tailscale IP dynamically."""
+    try:
+        out = subprocess.check_output(['tailscale', 'ip', '-4'], timeout=3, text=True).strip()
+        return out.split('\n')[0] if out else '127.0.0.1'
+    except Exception:
+        return '127.0.0.1'
+
+TAILSCALE_IP = _env.get('TAILSCALE_IP', _get_tailscale_ip())
 _ports_cache = {'data': None, 'ts': 0}
 
 @app.route('/api/ports')
@@ -1154,7 +1188,6 @@ def active_ports():
     # Also check for any project dev servers (common Astro/Vite ports)
     dev_ports = [
         {'port': 4321, 'name': 'Astro Dev'},
-        {'port': 5080, 'name': 'SHU Site'},
         {'port': 3000, 'name': 'Dev Server'},
     ]
     for svc in dev_ports:
@@ -1222,7 +1255,7 @@ def recent_links():
 
 @app.route('/api/settings/model', methods=['POST'])
 def settings_model():
-    """Update model config."""
+    """Update model config (legacy — also updates performance chat config)."""
     body = request.get_json()
     model = body.get('model', '').strip()
     effort = body.get('effort', '').strip()
@@ -1237,6 +1270,400 @@ def settings_model():
         return jsonify({'ok': True, **config})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/settings/performance', methods=['POST'])
+@require_auth
+def settings_performance():
+    """Update performance / model routing config."""
+    body = request.get_json(silent=True) or {}
+    valid_models = ('opus', 'sonnet', 'haiku')
+    valid_efforts = ('low', 'medium', 'high')
+
+    config = {}
+    for category in ('chat', 'agents', 'background'):
+        cat = body.get(category, {})
+        config[category] = {
+            'model': cat.get('model', 'sonnet') if cat.get('model') in valid_models else 'sonnet',
+            'effort': cat.get('effort', 'medium') if cat.get('effort') in valid_efforts else 'medium'
+        }
+
+    offpeak = body.get('offpeak', {})
+    config['offpeak'] = {
+        'enabled': bool(offpeak.get('enabled')),
+        'peak_start': max(0, min(23, int(offpeak.get('peak_start', 9)))),
+        'peak_end': max(0, min(23, int(offpeak.get('peak_end', 21)))),
+        'peak_model': offpeak.get('peak_model', 'sonnet') if offpeak.get('peak_model') in valid_models else 'sonnet'
+    }
+
+    # Per-agent model overrides
+    overrides = body.get('agent_overrides', {})
+    config['agent_overrides'] = {
+        name: model for name, model in overrides.items()
+        if isinstance(model, str) and model in valid_models
+    }
+
+    try:
+        with open(PERF_CONFIG, 'w') as f:
+            json.dump(config, f, indent=2)
+        # Also update legacy model-config.json with chat settings
+        with open(MODEL_CONFIG, 'w') as f:
+            json.dump(config['chat'], f, indent=2)
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/settings/task', methods=['POST'])
+@require_auth
+def settings_task():
+    """Update a scheduled task's schedule or status."""
+    body = request.get_json(silent=True) or {}
+    task_id = body.get('id')
+    if not task_id:
+        return jsonify({'ok': False, 'error': 'Missing task ID'}), 400
+
+    try:
+        conn = sqlite3.connect(DB)
+        if 'schedule' in body:
+            conn.execute('UPDATE scheduled_tasks SET schedule = ? WHERE id = ?', (body['schedule'], task_id))
+        if 'status' in body:
+            if body['status'] not in ('active', 'paused'):
+                return jsonify({'ok': False, 'error': 'Invalid status'}), 400
+            conn.execute('UPDATE scheduled_tasks SET status = ? WHERE id = ?', (body['status'], task_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/settings/pin', methods=['POST'])
+@require_auth
+def settings_pin():
+    """Update or disable HQ PIN."""
+    global PIN
+    body = request.get_json(silent=True) or {}
+    new_pin = (body.get('pin') or '').strip()
+
+    # Update .env file
+    env_file = os.path.join(os.path.expanduser('~/claudeclaw'), '.env')
+    lines = []
+    if os.path.exists(env_file):
+        with open(env_file) as f:
+            lines = [l for l in f.read().splitlines() if not l.startswith('PWA_PIN=')]
+
+    if new_pin:
+        lines.append(f'PWA_PIN={new_pin}')
+
+    with open(env_file, 'w') as f:
+        f.write('\n'.join(lines) + '\n')
+
+    PIN = new_pin
+    return jsonify({'ok': True, 'pin_enabled': bool(new_pin)})
+
+# ── Setup Wizard ───────────────────────────────────────
+
+PROJECT_ROOT = os.path.expanduser('~/claudeclaw')
+
+@app.route('/setup')
+def setup_page():
+    return send_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'setup.html'))
+
+@app.route('/setup/open-terminal', methods=['POST'])
+def setup_open_terminal():
+    """Open Terminal.app on the user's Mac."""
+    import subprocess
+    try:
+        subprocess.Popen(['open', '-a', 'Terminal'])
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+@app.route('/setup/add-to-dock', methods=['POST'])
+def setup_add_to_dock():
+    """Add Mammals HQ to the macOS Dock as a URL tile."""
+    import subprocess
+    try:
+        # Determine the best URL (Tailscale if available, otherwise localhost)
+        url = 'http://localhost:5067'
+        try:
+            ts = subprocess.check_output(['tailscale', 'status', '--json'], stderr=subprocess.DEVNULL, text=True, timeout=5)
+            data = json.loads(ts)
+            ip = data.get('Self', {}).get('TailscaleIPs', [None])[0]
+            if ip:
+                url = f'http://{ip}:5067'
+        except Exception:
+            pass
+
+        # Add URL tile to the right side of the Dock
+        tile = (
+            '<dict>'
+            '<key>tile-data</key><dict>'
+            '<key>label</key><string>Mammals HQ</string>'
+            f'<key>url</key><dict><key>_CFURLString</key><string>{url}</string>'
+            '<key>_CFURLStringType</key><integer>15</integer></dict>'
+            '</dict>'
+            '<key>tile-type</key><string>url-tile</string>'
+            '</dict>'
+        )
+        subprocess.run(
+            ['defaults', 'write', 'com.apple.dock', 'persistent-others', '-array-add', tile],
+            check=True
+        )
+        subprocess.run(['killall', 'Dock'], check=True)
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+@app.route('/setup/config')
+def setup_config():
+    """Return current .env config (values masked)."""
+    env_file = os.path.join(PROJECT_ROOT, '.env')
+    cfg = {}
+    if os.path.exists(env_file):
+        for line in open(env_file).read().splitlines():
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            if '=' in line:
+                k, v = line.split('=', 1)
+                cfg[k.strip()] = v.strip()
+    return jsonify({'config': cfg})
+
+@app.route('/setup/check')
+def setup_check():
+    """Check system requirements."""
+    import subprocess
+    checks = []
+
+    # Node
+    try:
+        nv = subprocess.check_output(['node', '-v'], stderr=subprocess.DEVNULL, text=True).strip()
+        major = int(nv.lstrip('v').split('.')[0])
+        checks.append({'label': f'Node.js {nv}', 'ok': major >= 20, 'warn': major < 20})
+    except Exception:
+        checks.append({'label': 'Node.js — not found', 'ok': False})
+
+    # Python
+    try:
+        pv = subprocess.check_output(['python3', '--version'], stderr=subprocess.DEVNULL, text=True).strip()
+        checks.append({'label': pv, 'ok': True})
+    except Exception:
+        checks.append({'label': 'Python 3 — not found', 'ok': False})
+
+    # Flask
+    try:
+        import flask
+        checks.append({'label': f'Flask {flask.__version__}', 'ok': True})
+    except Exception:
+        checks.append({'label': 'Flask — not installed', 'ok': False, 'warn': True})
+
+    # SQLite
+    try:
+        subprocess.check_output(['sqlite3', '--version'], stderr=subprocess.DEVNULL, text=True)
+        checks.append({'label': 'SQLite3', 'ok': True})
+    except Exception:
+        checks.append({'label': 'SQLite3 — not found', 'ok': False, 'warn': True})
+
+    # Claude CLI
+    try:
+        cv = subprocess.check_output(['claude', '--version'], stderr=subprocess.DEVNULL, text=True, timeout=10).strip()
+        checks.append({'label': f'Claude Code CLI ({cv})', 'ok': True})
+    except Exception:
+        checks.append({'label': 'Claude Code CLI — not found', 'ok': False})
+
+    # Git
+    try:
+        subprocess.check_output(['git', '--version'], stderr=subprocess.DEVNULL, text=True)
+        checks.append({'label': 'Git', 'ok': True})
+    except Exception:
+        checks.append({'label': 'Git — not found', 'ok': False, 'warn': True})
+
+    return jsonify({'checks': checks})
+
+@app.route('/setup/check-claude')
+def setup_check_claude():
+    import subprocess
+    result = {'installed': False, 'authed': False, 'version': ''}
+    try:
+        cv = subprocess.check_output(['claude', '--version'], stderr=subprocess.DEVNULL, text=True, timeout=10).strip()
+        result['installed'] = True
+        result['version'] = cv
+        try:
+            auth_out = subprocess.check_output(['claude', 'auth', 'status'], stderr=subprocess.DEVNULL, text=True, timeout=10)
+            auth_data = json.loads(auth_out)
+            if auth_data.get('loggedIn'):
+                result['authed'] = True
+        except Exception:
+            pass
+    except Exception:
+        pass
+    return jsonify(result)
+
+@app.route('/setup/check-tailscale')
+def setup_check_tailscale():
+    import subprocess
+    try:
+        ts = subprocess.check_output(['tailscale', 'status', '--json'], stderr=subprocess.DEVNULL, text=True, timeout=5)
+        data = json.loads(ts)
+        ip = data.get('Self', {}).get('TailscaleIPs', [None])[0]
+        if ip:
+            return jsonify({'connected': True, 'ip': ip})
+    except Exception:
+        pass
+    return jsonify({'connected': False})
+
+@app.route('/setup/save', methods=['POST'])
+def setup_save():
+    """Save configuration to .env and generate CLAUDE.md."""
+    data = request.get_json(silent=True) or {}
+    cfg = data.get('config', {})
+    if not cfg.get('BOT_OWNER'):
+        return jsonify({'ok': False, 'error': 'Name is required'})
+
+    # Write .env
+    env_file = os.path.join(PROJECT_ROOT, '.env')
+    lines = []
+    for k, v in cfg.items():
+        if v:
+            lines.append(f'{k}={v}')
+    try:
+        with open(env_file, 'w') as f:
+            f.write('\n'.join(lines) + '\n')
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+    # Generate CLAUDE.md from template
+    dist = os.path.join(PROJECT_ROOT, 'CLAUDE.md.dist')
+    claude_md = os.path.join(PROJECT_ROOT, 'CLAUDE.md')
+    if os.path.exists(dist) and not os.path.exists(claude_md):
+        try:
+            template = open(dist).read()
+            personalized = template.replace('{{BOT_OWNER}}', cfg.get('BOT_OWNER', 'User'))
+            with open(claude_md, 'w') as f:
+                f.write(personalized)
+        except Exception:
+            pass
+
+    # Reload env for this process
+    global PIN
+    PIN = cfg.get('PWA_PIN', '') or ''
+
+    return jsonify({'ok': True})
+
+@app.route('/setup/build', methods=['POST'])
+def setup_build():
+    """Build TypeScript."""
+    import subprocess
+    try:
+        subprocess.check_output(['npm', 'run', 'build'], cwd=PROJECT_ROOT, stderr=subprocess.STDOUT, text=True, timeout=60)
+        return jsonify({'ok': True})
+    except subprocess.CalledProcessError as e:
+        return jsonify({'ok': False, 'error': e.output[:500]})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+@app.route('/setup/install-service', methods=['POST'])
+def setup_install_service():
+    """Install launchd service."""
+    import subprocess
+    try:
+        node_path = subprocess.check_output(['which', 'node'], text=True).strip()
+        plist_name = 'com.mammals.bot'
+        plist_path = os.path.expanduser(f'~/Library/LaunchAgents/{plist_name}.plist')
+        dist_js = os.path.join(PROJECT_ROOT, 'dist', 'index.js')
+        node_dir = os.path.dirname(node_path)
+
+        plist = f'''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>{plist_name}</string>
+  <key>ProgramArguments</key><array><string>{node_path}</string><string>{dist_js}</string></array>
+  <key>WorkingDirectory</key><string>{PROJECT_ROOT}</string>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>5</integer>
+  <key>StandardOutPath</key><string>/tmp/mammals.log</string>
+  <key>StandardErrorPath</key><string>/tmp/mammals.log</string>
+  <key>EnvironmentVariables</key><dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:{node_dir}</string>
+  </dict>
+</dict>
+</plist>'''
+
+        with open(plist_path, 'w') as f:
+            f.write(plist)
+
+        subprocess.run(['launchctl', 'unload', plist_path], stderr=subprocess.DEVNULL, check=False)
+        subprocess.check_call(['launchctl', 'load', plist_path])
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+@app.route('/setup/ask', methods=['POST'])
+def setup_ask():
+    """Help chat agent — answers questions about Mammals using Claude CLI."""
+    import subprocess
+    data = request.get_json() or {}
+    question = (data.get('question') or '').strip()
+    if not question:
+        return jsonify({'answer': 'Please ask a question.'})
+
+    system_prompt = """You are a setup help agent for Mammals, a personal AI agent system that runs on macOS.
+Answer the user's question concisely (2-4 sentences max). Be friendly and direct.
+
+What Mammals is:
+- A personal AI agent system that runs on your Mac
+- Powered by Claude Code (Anthropic's CLI coding agent)
+- Includes HQ dashboard (web UI on port 5067), optional Telegram bot, optional Tailscale remote access
+- Can be extended with custom agents, skills, and automations
+
+Requirements:
+- macOS (Apple Silicon or Intel)
+- Node.js 20+, Python 3, Claude Code CLI with active subscription
+- Optional: Telegram bot token (for messaging), Tailscale (for remote access)
+
+Setup steps:
+1. System Check — verifies Node, Python, Git, SQLite are installed
+2. Claude Code — checks CLI is installed and authenticated (run 'claude login' if needed)
+3. Identity — set your name and a PIN for the HQ dashboard
+4. Build & Launch — saves config, builds TypeScript, installs background service via launchd
+
+After setup:
+- HQ dashboard available at http://localhost:5067
+- If Tailscale is set up, accessible from any device on your Tailscale network
+- Bot runs in background via launchd (auto-starts on login)
+- Logs at /tmp/mammals.log
+
+Troubleshooting:
+- Claude not found: install with 'npm install -g @anthropic-ai/claude-code'
+- Claude not authenticated: run 'claude login' in Terminal
+- Node too old: run 'brew upgrade node'
+- Build fails: check that npm install completed, try running 'npm run build' manually
+- Service won't start: check /tmp/mammals.log for errors
+- Port 5067 in use: another process is using it, find with 'lsof -i :5067'
+
+macOS security:
+- Gatekeeper may prompt when running downloaded software — click Open
+- Firewall: no changes needed for local use; allow incoming connections if using Tailscale
+- Tailscale installs a VPN configuration — you'll need to approve it in System Settings > VPN
+
+If you don't know the answer, say so honestly."""
+
+    try:
+        result = subprocess.run(
+            ['claude', '-p', '--system-prompt', system_prompt, '--max-turns', '1', question],
+            capture_output=True, text=True, timeout=30
+        )
+        answer = result.stdout.strip()
+        if not answer:
+            answer = result.stderr.strip() or 'No response from Claude. Make sure Claude Code is installed and authenticated.'
+        return jsonify({'answer': answer})
+    except subprocess.TimeoutExpired:
+        return jsonify({'answer': 'Claude took too long to respond. Try a simpler question.'})
+    except FileNotFoundError:
+        return jsonify({'answer': 'Claude Code CLI not found. Install it first, then come back to chat.'})
+    except Exception as e:
+        return jsonify({'answer': f'Error: {str(e)}'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5067, debug=False)

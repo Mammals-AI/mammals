@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mammals — Your AI Pack</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', -apple-system, sans-serif; }
+    code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+    body { background: #08090d; color: #e4e4e7; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #f97316 0%, #fb923c 40%, #fbbf24 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gradient-text-warm {
+      background: linear-gradient(135deg, #f97316 0%, #ef4444 50%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(20px);
+      transition: all 0.3s ease;
+    }
+    .card:hover {
+      border-color: rgba(249, 115, 22, 0.25);
+      box-shadow: 0 0 40px rgba(249, 115, 22, 0.06);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+
+    .terminal {
+      background: #0d0e14;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px; overflow: hidden;
+    }
+    .terminal-header {
+      background: rgba(255,255,255,0.03);
+      padding: 10px 16px; display: flex; gap: 8px; align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-body { padding: 20px 24px; font-size: 14px; line-height: 1.8; }
+
+    /* HQ-style chat demo */
+    .hq-demo {
+      background: #0a0b10;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; overflow: hidden;
+      max-width: 520px;
+    }
+    .hq-header {
+      background: rgba(255,255,255,0.02);
+      padding: 12px 18px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .hq-header-av { width: 24px; height: 24px; border-radius: 8px; object-fit: cover; }
+    .hq-header-name { font-size: 13px; font-weight: 600; color: #e4e4e7; }
+    .hq-header-status { font-size: 10px; color: #64748b; }
+    .hq-msgs {
+      padding: 16px 18px;
+      display: flex; flex-direction: column; gap: 10px;
+      min-height: 200px;
+      background: radial-gradient(ellipse at 50% 100%, rgba(249,115,22,0.02) 0%, transparent 70%);
+    }
+    .hq-msg { display: flex; gap: 8px; align-items: flex-end; max-width: 85%; }
+    .hq-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+    .hq-msg-av { width: 24px; height: 24px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+    .hq-msg-bubble {
+      padding: 10px 14px; border-radius: 16px; font-size: 13px; line-height: 1.5;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .hq-msg.user .hq-msg-bubble {
+      background: rgba(249,115,22,0.15); color: #e4e4e7;
+      border: 1px solid rgba(249,115,22,0.2); border-bottom-right-radius: 4px;
+    }
+    .hq-msg.agent .hq-msg-bubble {
+      background: rgba(255,255,255,0.02); color: #d4d4d8;
+      border: 1px solid rgba(255,255,255,0.06); border-bottom-left-radius: 4px;
+    }
+    .hq-msg-time { font-size: 9px; color: #475569; align-self: flex-end; flex-shrink: 0; }
+    .hq-input {
+      padding: 10px 14px; display: flex; gap: 8px; align-items: center;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .hq-input-field {
+      flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px; padding: 8px 14px; font-size: 13px; color: #64748b;
+    }
+    .hq-input-send {
+      width: 28px; height: 28px; border-radius: 8px; background: #f97316;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: white; border: none;
+    }
+
+    .pulse-dot {
+      width: 8px; height: 8px; background: #22c55e; border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+    }
+
+    .agent-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 100px; font-size: 13px; font-weight: 500;
+      border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);
+    }
+
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(249,115,22,0.15), transparent);
+      max-width: 56rem; margin: 0 auto;
+    }
+
+    .pricing-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px; padding: 40px 32px; position: relative; overflow: hidden;
+    }
+    .pricing-card.featured {
+      border-color: rgba(249,115,22,0.35);
+      background: rgba(249,115,22,0.04);
+    }
+    .pricing-card.featured::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #f97316, #fb923c, #fbbf24);
+    }
+
+    .btn-primary {
+      background: #f97316; color: white;
+      padding: 14px 32px; border-radius: 12px;
+      font-weight: 600; font-size: 16px; border: none; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
+    }
+    .btn-primary:hover { background: #ea580c; transform: translateY(-1px); box-shadow: 0 8px 30px rgba(249,115,22,0.25); }
+
+    .btn-outline {
+      background: transparent; color: #e4e4e7;
+      padding: 14px 32px; border-radius: 12px;
+      font-weight: 600; font-size: 16px;
+      border: 1px solid rgba(255,255,255,0.15); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
+    }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.03); }
+
+    .scroll-fade-in { opacity: 0; transform: translateY(30px); transition: all 0.6s ease; }
+    .scroll-fade-in.visible { opacity: 1; transform: translateY(0); }
+
+    .bg-mesh {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none; z-index: 0;
+      background-image:
+        radial-gradient(ellipse 600px 400px at 20% 20%, rgba(249,115,22,0.02) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 500px at 80% 60%, rgba(234,88,12,0.015) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 300px at 50% 90%, rgba(251,146,60,0.015) 0%, transparent 70%);
+    }
+
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px);
+      opacity: 0; animation: float-orb 12s ease-in-out infinite; pointer-events: none;
+    }
+    @keyframes float-orb {
+      0%, 100% { opacity: 0.06; transform: translate(0, 0) scale(1); }
+      33% { opacity: 0.12; transform: translate(30px, -40px) scale(1.1); }
+      66% { opacity: 0.08; transform: translate(-20px, 20px) scale(0.95); }
+    }
+
+    .type-cursor::after {
+      content: '|'; animation: blink 1s step-end infinite; color: #f97316;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    .nav-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      padding: 16px 24px;
+      background: rgba(8,9,13,0.8); backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.04); transition: all 0.3s;
+    }
+    .nav-bar.scrolled { padding: 10px 24px; background: rgba(8,9,13,0.95); }
+
+    .hero-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(249,115,22,0.4), rgba(251,146,60,0.4), transparent);
+      animation: line-shimmer 4s ease-in-out infinite;
+    }
+    @keyframes line-shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+    .comparison-row {
+      display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+      gap: 1px; background: rgba(255,255,255,0.04);
+    }
+    .comparison-row > div { padding: 14px 20px; background: #08090d; }
+
+    .flow-line {
+      width: 2px; height: 40px;
+      background: linear-gradient(180deg, rgba(249,115,22,0.4), rgba(249,115,22,0.1));
+      margin: 0 auto;
+    }
+
+    /* Carousel */
+    .carousel-wrap { position: relative; overflow: hidden; margin: 0 -24px; padding: 0 24px; }
+    .carousel-track {
+      display: flex; gap: 24px;
+      overflow-x: auto; scroll-snap-type: x mandatory;
+      scrollbar-width: none; -ms-overflow-style: none;
+      padding: 12px 0 24px;
+      scroll-behavior: smooth;
+    }
+    .carousel-track::-webkit-scrollbar { display: none; }
+    .carousel-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1);
+      color: #fff; font-size: 20px; cursor: pointer; z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; backdrop-filter: blur(8px);
+    }
+    .carousel-btn:hover { background: rgba(249,115,22,0.3); border-color: rgba(249,115,22,0.4); }
+    .carousel-btn.prev { left: 8px; }
+    .carousel-btn.next { right: 8px; }
+
+    .mammal-card {
+      flex: 0 0 300px; scroll-snap-align: center;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px; padding: 28px;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; gap: 16px; transition: all 0.3s;
+    }
+    .mammal-card:hover {
+      border-color: rgba(249,115,22,0.25);
+      background: rgba(249,115,22,0.04);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(249,115,22,0.08);
+    }
+    .mammal-card .mammal-av {
+      width: 160px; height: 160px; border-radius: 24px;
+      object-fit: cover; border: 2px solid rgba(255,255,255,0.08);
+      transition: all 0.3s;
+    }
+    .mammal-card:hover .mammal-av {
+      border-color: rgba(249,115,22,0.3);
+      box-shadow: 0 0 30px rgba(249,115,22,0.12);
+    }
+    .mammal-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px; font-weight: 700; color: #f97316;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .mammal-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; animation: pdot 2s ease-in-out infinite; }
+    @keyframes pdot { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+    .mammal-sub { font-size: 13px; color: #94a3b8; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+    .mammal-desc { font-size: 13px; color: #64748b; line-height: 1.6; }
+
+    .mammal-card.create-card {
+      border-style: dashed; border-color: rgba(249,115,22,0.15);
+      background: rgba(249,115,22,0.02); justify-content: center;
+    }
+    .mammal-card.create-card:hover {
+      border-color: rgba(249,115,22,0.4);
+      background: rgba(249,115,22,0.06);
+    }
+    .create-icon {
+      width: 160px; height: 160px; border-radius: 24px;
+      background: rgba(249,115,22,0.06); border: 2px dashed rgba(249,115,22,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px; color: rgba(249,115,22,0.4); transition: all 0.3s;
+    }
+    .mammal-card.create-card:hover .create-icon {
+      background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.4);
+      color: rgba(249,115,22,0.7);
+    }
+
+    /* Carousel dots */
+    .carousel-dots { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
+    .carousel-dots .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,0.12); transition: all 0.3s; cursor: pointer;
+    }
+    .carousel-dots .dot.active { background: #f97316; box-shadow: 0 0 8px rgba(249,115,22,0.4); }
+
+    @media (max-width: 640px) {
+      .mammal-card { flex: 0 0 260px; padding: 24px 20px; }
+      .mammal-card .mammal-av, .create-icon { width: 120px; height: 120px; border-radius: 20px; }
+      .carousel-btn { width: 36px; height: 36px; font-size: 16px; }
+      .terminal-body { padding: 14px 16px; font-size: 12px; }
+      .comparison-row { grid-template-columns: 1fr 1fr !important; }
+      .comparison-row > div:nth-child(n+4) { display: none; }
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <div class="bg-mesh"></div>
+
+  <nav class="nav-bar">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <span class="text-xl font-black tracking-tight text-white">mammals</span>
+      <div class="hidden md:flex items-center gap-8 text-sm text-zinc-500">
+        <a href="#agents" class="hover:text-zinc-300 transition">Agents</a>
+        <a href="#features" class="hover:text-zinc-300 transition">Features</a>
+        <a href="#compare" class="hover:text-zinc-300 transition">Compare</a>
+        <a href="#pricing" class="hover:text-zinc-300 transition">Get it</a>
+        <a href="https://letsgodaemon.gumroad.com/l/mammals" class="btn-primary !py-2 !px-5 !text-sm" style="text-decoration:none;">Get Mammals</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="relative min-h-screen flex items-center justify-center overflow-hidden px-6" style="background:#000;">
+    <div class="hero-glow" style="top:55%;left:-60px;background:#f97316;opacity:0.06;"></div>
+    <div class="hero-glow" style="top:50%;right:-60px;background:#ea580c;opacity:0.06;"></div>
+
+    <div class="max-w-5xl mx-auto text-center relative z-10 pt-20">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.03] mb-4">
+        <div class="pulse-dot"></div>
+        <span id="hero-cycle" class="text-sm text-zinc-400" style="min-width:120px;transition:opacity 0.4s;">Always on.</span>
+      </div>
+
+      <div class="flex justify-center mb-0">
+        <img src="/avatars/daemon.png" alt="Mammals — Daemon"
+          style="width:min(60vw,400px);display:block;border-radius:32px;border:2px solid rgba(255,255,255,0.06);mask-image:linear-gradient(to bottom,black 0%,black 88%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,black 0%,black 88%,transparent 100%);">
+      </div>
+
+      <h1 class="text-7xl md:text-9xl font-black tracking-tight mt-4 mb-3 text-white">mammals</h1>
+
+      <p class="text-xs text-zinc-600 tracking-widest uppercase mb-6 mono" id="mammal-def" style="min-height:1.4em;transition:opacity 0.5s;"></p>
+
+      <p class="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto mb-4 font-light">
+        A persistent AI system that runs on your machine 24/7. Powered by Claude.
+      </p>
+      <p class="text-base md:text-lg text-zinc-500 max-w-xl mx-auto mb-4">
+        Each agent has a code name and a role. You give the order. Your pack handles the rest.
+      </p>
+      <p class="text-sm text-zinc-600 max-w-lg mx-auto mb-12">
+        Runs natively on Claude Code. Connects to Gemini, Grok, Veo, Kling, ElevenLabs, and any API you throw at it.
+      </p>
+
+      <div class="flex flex-wrap gap-4 justify-center mb-16">
+        <a href="https://letsgodaemon.gumroad.com/l/mammals" class="btn-primary" style="text-decoration:none;">Get Mammals &rarr;</a>
+      </div>
+
+      <div class="hq-demo mx-auto text-left">
+        <div class="hq-header">
+          <img class="hq-header-av" id="hq-demo-av" src="/avatars/otter.png" alt="">
+          <div>
+            <div class="hq-header-name" id="hq-demo-name">otter</div>
+            <div class="hq-header-status">online</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:4px;">
+            <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 4px #22c55e;"></div>
+          </div>
+        </div>
+        <div class="hq-msgs" id="hq-demo-msgs"></div>
+        <div class="hq-input">
+          <div class="hq-input-field">Message...</div>
+          <div class="hq-input-send">&uarr;</div>
+        </div>
+      </div>
+      <script>
+        (function() {
+          const demos = [
+            { you: "order my usual groceries from instacart, same list as last week", agent: "otter", av: "/avatars/otter.png",
+              reply: "Pulled last week's order — 23 items. Added to cart, applied coupons ($12 saved). Order placed. Delivery tomorrow 10am-12pm.", time: "2:41 PM" },
+            { you: "build a landing page for my new project. here's the brief.", agent: "badger", av: "/avatars/badger.png",
+              reply: "Brief parsed. Set up scaffolding, built homepage + about + contact pages, deployed to Vercel. Site is live — preview link sent to your Telegram.", time: "11:32 PM" },
+            { you: "find me a flight to NYC next Friday under $250, nonstop", agent: "fox", av: "/avatars/fox.png",
+              reply: "Searched Google Flights, Kayak, and Skiplagged. Found 4 nonstop options — cheapest is $189 on Delta. Sent you the top 3 with booking links.", time: "9:14 AM" },
+            { you: "monitor BTC tonight, alert me if it drops below 60k", agent: "wolf", av: "/avatars/wolf.png",
+              reply: "Watching BTC/USD — currently $62,841. Alert threshold set at $60,000. I'll message you the moment it crosses.", time: "8:03 PM" },
+            { you: "write a launch email for the new feature, keep it tight", agent: "mink", av: "/avatars/mink.png",
+              reply: "Pulled brand voice from memory. Draft complete — 3 variants saved to Notion drafts. Let me know which one.", time: "3:17 PM" },
+          ];
+          const msgsEl = document.getElementById('hq-demo-msgs');
+          const nameEl = document.getElementById('hq-demo-name');
+          const avEl = document.getElementById('hq-demo-av');
+          let idx = 0;
+
+          function render(d) {
+            msgsEl.style.opacity = '0';
+            setTimeout(() => {
+              nameEl.textContent = d.agent;
+              avEl.src = d.av;
+              msgsEl.innerHTML =
+                '<div class="hq-msg user">' +
+                  '<div class="hq-msg-bubble">' + d.you + '</div>' +
+                  '<span class="hq-msg-time">' + d.time + '</span>' +
+                '</div>' +
+                '<div class="hq-msg agent">' +
+                  '<img class="hq-msg-av" src="' + d.av + '" alt="' + d.agent + '">' +
+                  '<div class="hq-msg-bubble">' + d.reply + '</div>' +
+                  '<span class="hq-msg-time">' + d.time + '</span>' +
+                '</div>';
+              msgsEl.style.opacity = '1';
+            }, 400);
+          }
+
+          msgsEl.style.transition = 'opacity 0.4s';
+          render(demos[0]);
+          setInterval(() => { idx = (idx + 1) % demos.length; render(demos[idx]); }, 6000);
+        })();
+      </script>
+    </div>
+  </section>
+
+  <div class="hero-line max-w-4xl mx-auto"></div>
+
+  <!-- WHAT IS IT -->
+  <section class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-3xl md:text-5xl font-bold mb-8 text-white">
+        Not a chatbot.<br><span class="gradient-text">A pack.</span>
+      </h2>
+      <p class="text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+        A self-hosted AI agent platform on your own hardware.
+        It connects to your apps, files, browser, and terminal — and actually gets things done.
+      </p>
+    </div>
+  </section>
+
+  <!-- POWERED BY + COST MODEL -->
+  <section class="py-20 px-6 scroll-fade-in">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">Claude-native. <span class="gradient-text">Multi-model capable.</span></h2>
+        <p class="text-zinc-500 text-lg max-w-2xl mx-auto">
+          Mammals runs on your Claude subscription — not the API. Claude handles reasoning and execution. External models handle what they're best at.
+        </p>
+      </div>
+      <div class="flex flex-wrap justify-center gap-4 mb-10">
+        <div class="px-5 py-3 rounded-xl border border-orange-500/30 bg-orange-500/[0.06] text-sm">
+          <span class="text-orange-400 font-semibold">Claude</span>
+          <span class="text-zinc-500 ml-1">— core brain</span>
+        </div>
+        <div class="px-5 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] text-sm">
+          <span class="text-zinc-300 font-semibold">Gemini</span>
+          <span class="text-zinc-500 ml-1">— image gen, vision</span>
+        </div>
+        <div class="px-5 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] text-sm">
+          <span class="text-zinc-300 font-semibold">Grok</span>
+          <span class="text-zinc-500 ml-1">— real-time search</span>
+        </div>
+        <div class="px-5 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] text-sm">
+          <span class="text-zinc-300 font-semibold">Veo / Kling / Sora</span>
+          <span class="text-zinc-500 ml-1">— video</span>
+        </div>
+        <div class="px-5 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] text-sm">
+          <span class="text-zinc-300 font-semibold">ElevenLabs</span>
+          <span class="text-zinc-500 ml-1">— voice & TTS</span>
+        </div>
+        <div class="px-5 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] text-sm">
+          <span class="text-zinc-300 font-semibold">Any API</span>
+          <span class="text-zinc-500 ml-1">— if it has an endpoint</span>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-orange-500/25 bg-orange-500/[0.04] p-8 text-center relative overflow-hidden">
+        <div class="hero-glow" style="top:-100px;left:50%;transform:translateX(-50%);background:#f97316;opacity:0.2;width:400px;height:400px;"></div>
+        <div class="relative z-10">
+          <div class="flex flex-wrap gap-8 justify-center text-sm mb-4">
+            <div class="text-center">
+              <div class="text-2xl font-black text-zinc-600 line-through">$200+/mo</div>
+              <div class="text-zinc-500 mt-1">API-based tools</div>
+            </div>
+            <div class="text-center">
+              <div class="text-4xl font-black text-orange-400">Free</div>
+              <div class="text-zinc-400 mt-1">Mammals — pay what you wish</div>
+            </div>
+          </div>
+          <p class="text-zinc-500 text-sm">Most agent platforms bill per token. Mammals is free — pay what you wish. Runs on your existing Claude Pro or Max plan.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- FEATURES -->
+  <section id="features" class="py-20 px-6 scroll-fade-in">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">Not a chatbot. <span class="gradient-text">An operator.</span></h2>
+        <p class="text-zinc-500 text-lg">Every other AI tool is a window you open. Mammals never closes.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="card rounded-2xl p-8">
+          <div class="feature-icon bg-orange-500/10 text-orange-400 mb-5">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2 text-zinc-200">Always On</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed">Runs 24/7 on your machine. No browser tab to keep open. Starts on boot, survives restarts, picks up where it left off.</p>
+        </div>
+        <div class="card rounded-2xl p-8">
+          <div class="feature-icon bg-amber-500/10 text-amber-400 mb-5">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2 text-zinc-200">Self-Managing Pack</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed">Create named specialist agents with one message. Mammals auto-routes tasks to the right agent, manages sessions, keeps them alive across restarts.</p>
+        </div>
+        <div class="card rounded-2xl p-8">
+          <div class="feature-icon bg-red-500/10 text-red-400 mb-5">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2 text-zinc-200">Controls Your Machine</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed">Full terminal access, file system control, browser automation via Chrome DevTools Protocol. It doesn't just suggest — it executes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- AGENT ROSTER — CAROUSEL -->
+  <section id="agents" class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-6">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">Meet the <span class="gradient-text">pack</span></h2>
+        <p class="text-zinc-400 text-lg max-w-2xl mx-auto mb-2">
+          Every agent has a name, an avatar, a role, and persistent memory. Create as many as you want — each one is yours to customize.
+        </p>
+        <p class="text-zinc-600 text-sm">Swipe or use arrows to browse</p>
+      </div>
+      <div class="carousel-wrap">
+        <button class="carousel-btn prev" onclick="scrollCarousel(-1)" aria-label="Previous">&#8249;</button>
+        <button class="carousel-btn next" onclick="scrollCarousel(1)" aria-label="Next">&#8250;</button>
+        <div class="carousel-track" id="agentCarousel">
+          <div class="mammal-card">
+            <img class="mammal-av" src="/avatars/wolf.png" alt="wolf">
+            <div class="mammal-name">wolf <div class="mammal-dot"></div></div>
+            <div class="mammal-sub">Surveillance & Monitoring</div>
+            <div class="mammal-desc">Watches markets, monitors competitors, tracks prices. Sends alerts when something moves.</div>
+          </div>
+          <div class="mammal-card">
+            <img class="mammal-av" src="/avatars/fox.png" alt="fox">
+            <div class="mammal-name">fox <div class="mammal-dot"></div></div>
+            <div class="mammal-sub">Research & Recon</div>
+            <div class="mammal-desc">Scrapes, searches, and synthesizes. Deep dives into any topic. Finds what you need before you ask.</div>
+          </div>
+          <div class="mammal-card">
+            <img class="mammal-av" src="/avatars/wolverine.png" alt="wolverine">
+            <div class="mammal-name">wolverine <div class="mammal-dot"></div></div>
+            <div class="mammal-sub">Security & Threat Monitoring</div>
+            <div class="mammal-desc">Scans for vulnerabilities, monitors login attempts, watches agent behavior for anomalies, audits network security.</div>
+          </div>
+          <div class="mammal-card">
+            <img class="mammal-av" src="/avatars/mink.png" alt="mink">
+            <div class="mammal-name">mink <div class="mammal-dot"></div></div>
+            <div class="mammal-sub">Writing & Content</div>
+            <div class="mammal-desc">Drafts, edits, and publishes. Articles, emails, social posts. Knows your voice and never misses a deadline.</div>
+          </div>
+          <div class="mammal-card">
+            <img class="mammal-av" src="/avatars/otter.png" alt="otter">
+            <div class="mammal-name">otter <div class="mammal-dot"></div></div>
+            <div class="mammal-sub">Errands & Logistics</div>
+            <div class="mammal-desc">Appointments, travel booking, bill reminders, order tracking. Handles the stuff you never get to.</div>
+          </div>
+          <div class="mammal-card">
+            <img class="mammal-av" src="/avatars/lynx.png" alt="lynx">
+            <div class="mammal-name">lynx <div class="mammal-dot"></div></div>
+            <div class="mammal-sub">Ops & Scheduling</div>
+            <div class="mammal-desc">Calendars, follow-ups, recurring tasks, daily briefings. Keeps your day running on time.</div>
+          </div>
+          <div class="mammal-card">
+            <img class="mammal-av" src="/avatars/badger.png" alt="badger">
+            <div class="mammal-name">badger <div class="mammal-dot"></div></div>
+            <div class="mammal-sub">Development</div>
+            <div class="mammal-desc">Writes code, reviews PRs, scaffolds projects, debugs issues, deploys to production.</div>
+          </div>
+          <div class="mammal-card">
+            <img class="mammal-av" src="/avatars/tiger.png" alt="tiger">
+            <div class="mammal-name">tiger <div class="mammal-dot"></div></div>
+            <div class="mammal-sub">Web & Portfolio</div>
+            <div class="mammal-desc">Builds websites, handles deployments, designs layouts, optimizes performance. Your front-end specialist.</div>
+          </div>
+          <div class="mammal-card">
+            <img class="mammal-av" src="/avatars/bull.png" alt="bull">
+            <div class="mammal-name">bull <div class="mammal-dot"></div></div>
+            <div class="mammal-sub">Trading & Markets</div>
+            <div class="mammal-desc">Runs trading strategies, monitors positions, executes on signals. Watches the market so you don't have to.</div>
+          </div>
+          <div class="mammal-card create-card">
+            <div class="create-icon">+</div>
+            <div class="mammal-name" style="color:#94a3b8;">your agent</div>
+            <div class="mammal-sub" style="color:#64748b;">Any Role You Invent</div>
+            <div class="mammal-desc" style="color:#475569;">One message creates it. Custom name, custom avatar, custom role. Unlimited agents — all persistent, all yours.</div>
+          </div>
+        </div>
+      </div>
+      <div class="carousel-dots" id="carouselDots"></div>
+      <div class="text-center mt-10">
+        <div class="inline-flex items-center gap-3 rounded-full border border-orange-500/20 bg-orange-500/[0.04] px-6 py-3">
+          <span class="text-orange-400 text-sm font-medium">Infinitely customizable</span>
+          <span class="text-zinc-600 text-sm">— name, avatar, personality, tools, and role are all yours to define</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- INTEGRATIONS -->
+  <section class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">Connects to <span class="gradient-text">everything</span></h2>
+        <p class="text-zinc-500 text-lg">Via MCP (Model Context Protocol), browser automation, and direct APIs.</p>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="integrationGrid"></div>
+      <script>
+        (function() {
+          var all = [
+            // Everyday apps normal people use
+            'Gmail|Read & send email',
+            'Google Calendar|Events & scheduling',
+            'Google Sheets|Spreadsheets & data',
+            'Google Docs|Write & edit documents',
+            'Google Maps|Directions & places',
+            'Google Drive|Cloud file storage',
+            'Google Flights|Search & book flights',
+            'YouTube|Upload & watch videos',
+            'Instagram|Post photos & stories',
+            'TikTok|Upload & view analytics',
+            'Twitter / X|Post & read feeds',
+            'Facebook|Pages & marketplace',
+            'Reddit|Browse & post',
+            'LinkedIn|Networking & jobs',
+            'Spotify|Music & playlists',
+            'Apple Music|Music library',
+            'Amazon|Shopping & price tracking',
+            'eBay|Buy & sell anything',
+            'Etsy|Handmade marketplace',
+            'Walmart|Shopping & pickup',
+            'Target|Deals & ordering',
+            'Instacart|Grocery delivery',
+            'DoorDash|Food delivery',
+            'Uber Eats|Food ordering',
+            'Uber|Rides & scheduling',
+            'Lyft|Ride booking',
+            'Zillow|Home & rental search',
+            'Airbnb|Book travel stays',
+            'Booking.com|Hotel reservations',
+            'Craigslist|Local classifieds',
+            'Yelp|Business reviews',
+            'Venmo|Send & request money',
+            'PayPal|Online payments',
+            'Cash App|Money transfers',
+            'Robinhood|Stock trading',
+            'Coinbase|Buy & sell crypto',
+            'Mint|Budget tracking',
+            'YNAB|Budget planning',
+            'Experian|Credit monitoring',
+            'Netflix|Browse & manage',
+            'Hulu|Streaming & watchlist',
+            'Disney+|Streaming content',
+            'Apple TV+|Shows & movies',
+            'Kindle|Books & reading',
+            'Audible|Audiobooks',
+            'iCloud|Apple cloud sync',
+            'Dropbox|File sharing',
+            'OneDrive|Microsoft cloud',
+            'WhatsApp|Messaging',
+            'Telegram|Chat & bots',
+            'Signal|Secure messaging',
+            // Productivity & business
+            'Notion|Notes & databases',
+            'Canva|Design anything',
+            'Slack|Team messaging',
+            'Discord|Communities & chat',
+            'Zoom|Video meetings',
+            'Microsoft Teams|Work chat & calls',
+            'Trello|Task boards',
+            'Todoist|To-do lists',
+            'Evernote|Notes & clipping',
+            'Calendly|Meeting scheduling',
+            'WordPress|Blog & website',
+            'Squarespace|Website builder',
+            'Wix|Website design',
+            'Shopify|Online store',
+            'Gumroad|Sell digital products',
+            'Mailchimp|Email marketing',
+            'QuickBooks|Invoicing & accounting',
+            'FreshBooks|Time & billing',
+            'Asana|Project management',
+            'Monday.com|Work management',
+            'Airtable|Spreadsheet-database',
+            'Figma|UI & graphic design',
+            'Loom|Screen recordings',
+            'DocuSign|E-signatures',
+            'HubSpot|CRM & contacts',
+            // Creative tools (MCP)
+            'Photoshop|Photo editing & AI',
+            'Premiere Pro|Video editing',
+            'After Effects|Motion graphics',
+            'Illustrator|Vector design',
+            'Ableton Live|Music production',
+            // System & tech
+            'Chrome|Full browser control',
+            'Terminal|Run any command',
+            'File System|Read & write files',
+            'GitHub|Code & repos',
+            'Home Assistant|Smart home',
+            'Ring|Doorbell & cameras',
+            'Nest|Thermostat & cameras',
+            'Philips Hue|Smart lights',
+            // APIs & services
+            'Stripe|Payments & billing',
+            'ElevenLabs|Voice & TTS',
+            'OpenAI|DALL-E & GPT',
+            'Twilio|SMS & calls',
+            'Weather.gov|Forecasts & alerts',
+            'CoinGecko|Crypto prices',
+            'Binance|Crypto trading',
+          ];
+
+          // Parse items
+          var items = all.map(function(s){var p=s.split('|');return{n:p[0],d:p[1]};});
+
+          var SLOTS = 16, grid = document.getElementById('integrationGrid');
+          var showing = [], pool = [];
+
+          function shuf(a){for(var i=a.length-1;i>0;i--){var j=0|Math.random()*(i+1);var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+          // Init
+          var indices=[];for(var i=0;i<items.length;i++)indices.push(i);
+          shuf(indices);
+          for(var i=0;i<SLOTS;i++) showing.push(indices[i]);
+          for(var i=SLOTS;i<indices.length;i++) pool.push(indices[i]);
+
+          for(var i=0;i<SLOTS;i++){
+            var el=document.createElement('div');
+            el.className='card rounded-xl p-5';
+            el.style.cssText='transition:opacity 0.8s ease;';
+            el.innerHTML='<div class="text-sm font-medium text-zinc-200">'+items[showing[i]].n+'</div><div class="text-xs text-zinc-500">'+items[showing[i]].d+'</div>';
+            grid.appendChild(el);
+          }
+
+          // Swap 8 random cells every 2s — pure fade, no movement
+          setInterval(function(){
+            if(!pool.length)return;
+            var picks=[];for(var i=0;i<SLOTS;i++)picks.push(i);shuf(picks);
+            var count=Math.min(8,pool.length);
+            for(var c=0;c<count;c++){
+              var si=picks[c];
+              var pi=0|Math.random()*pool.length;
+              var old=showing[si];showing[si]=pool[pi];pool[pi]=old;
+              var cell=grid.children[si],item=items[showing[si]];
+              cell.style.opacity='0';
+              (function(cell,item){setTimeout(function(){
+                cell.children[0].textContent=item.n;
+                cell.children[1].textContent=item.d;
+                cell.style.opacity='1';
+              },800);})(cell,item);
+            }
+          },2000);
+        })();
+      </script>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SELF-EVOLVING -->
+  <section class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">It can <span class="gradient-text">reprogram itself</span></h2>
+        <p class="text-zinc-500 text-lg max-w-2xl mx-auto">
+          Mammals runs on Claude Code — it can read, write, and modify its own codebase. Build new skills, change behaviors, add capabilities. All through conversation.
+        </p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="card rounded-2xl p-8">
+          <div class="feature-icon bg-orange-500/10 text-orange-400 mb-5">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2 text-zinc-200">Build New Skills</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed">"Build me a skill that checks Hacker News every morning and sends me the top 5 AI posts." Mammals writes the script, registers it, and schedules it.</p>
+        </div>
+        <div class="card rounded-2xl p-8">
+          <div class="feature-icon bg-amber-500/10 text-amber-400 mb-5">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2 text-zinc-200">Reconfigure On The Fly</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed">Don't like how it handles something? Tell it. It modifies its own code and the change takes effect immediately.</p>
+        </div>
+        <div class="card rounded-2xl p-8">
+          <div class="feature-icon bg-red-500/10 text-red-400 mb-5">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2 text-zinc-200">Import Community Skills</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed">Browse community-built skills, audit the code for safety, and install with one command. Or write your own from scratch.</p>
+        </div>
+      </div>
+      <div class="mt-8 card rounded-2xl p-6">
+        <div class="terminal-header mb-4">
+          <div class="terminal-dot" style="background:#ff5f57;"></div>
+          <div class="terminal-dot" style="background:#febc2e;"></div>
+          <div class="terminal-dot" style="background:#28c840;"></div>
+          <span class="mono text-xs text-zinc-600 ml-2">mammals — self-modification</span>
+        </div>
+        <div class="mono text-xs">
+          <p class="text-zinc-600">you:</p>
+          <p class="text-zinc-200 mb-3">build me a skill that watches my front door camera and texts me if it detects motion after midnight</p>
+          <p class="text-zinc-600">mammals:</p>
+          <p class="text-zinc-400 mb-1"><span class="text-zinc-700">[writing]</span> scripts/door-watch.ts — camera feed + motion threshold</p>
+          <p class="text-zinc-400 mb-1"><span class="text-zinc-700">[registered]</span> skill: door-alert — active midnight-6am, snapshot on trigger</p>
+          <p class="text-orange-400">Live. I'll send you a photo and alert the moment anything moves.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- USE CASES -->
+  <section class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">What people build <span class="gradient-text">with Mammals</span></h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-8" id="useCaseGrid"></div>
+      <script>
+        (function(){
+          var cases = [
+            {cat:'Freelancers & Agencies', items:[
+              'Scrape leads from job boards and send qualified ones to your phone',
+              'Auto-draft proposals based on project requirements',
+              'Monitor client sites for uptime and performance',
+              'Generate invoices and follow up on overdue payments',
+            ]},
+            {cat:'Content Creators', items:[
+              'Script, generate, and post TikTok/YouTube content',
+              'Manage multi-platform publishing workflows',
+              'Auto-generate thumbnails and cover images',
+              'Track analytics and adjust strategy autonomously',
+            ]},
+            {cat:'Small Business', items:[
+              'Draft and schedule social media posts across platforms',
+              'Generate product listings with SEO-optimized copy',
+              'Build reports from spreadsheets and databases',
+              'Research tools, vendors, and options — summarized for you',
+            ]},
+            {cat:'Developers', items:[
+              'Monitor deployments and restart failed services',
+              'Review PRs and run test suites on demand',
+              'Scaffold new projects from conversation',
+              'Debug production issues with full system access',
+            ]},
+            {cat:'Students', items:[
+              'Summarize lecture notes and create study guides',
+              'Research papers and compile citations automatically',
+              'Quiz yourself with AI-generated flashcards',
+              'Proofread essays and suggest improvements',
+            ]},
+            {cat:'Job Seekers', items:[
+              'Scrape job boards and filter by your criteria',
+              'Tailor your resume for each application automatically',
+              'Track applications and follow up on deadlines',
+              'Research companies before interviews',
+            ]},
+            {cat:'Real Estate', items:[
+              'Monitor new listings matching your criteria on Zillow',
+              'Generate property comparison spreadsheets',
+              'Draft listing descriptions from photos and specs',
+              'Track mortgage rates and alert on drops',
+            ]},
+            {cat:'E-commerce Sellers', items:[
+              'Monitor competitor pricing on Amazon and eBay',
+              'Auto-generate product descriptions and tags',
+              'Track inventory and alert when stock is low',
+              'Respond to customer questions with drafted replies',
+            ]},
+            {cat:'Music & Audio', items:[
+              'Set up Ableton sessions with tracks and instruments',
+              'Transcribe song ideas from voice memos',
+              'Organize sample libraries and tag by genre',
+              'Draft release descriptions for DistroKid or Spotify',
+            ]},
+            {cat:'Personal Finance', items:[
+              'Track spending across accounts and categorize',
+              'Monitor crypto portfolio and alert on big moves',
+              'Compare insurance quotes and summarize differences',
+              'Set up bill reminders and auto-pay schedules',
+            ]},
+            {cat:'Parents & Families', items:[
+              'Plan weekly meal prep and generate grocery lists',
+              'Research and compare summer camps or activities',
+              'Schedule family calendar and send reminders',
+              'Track kids homework assignments and due dates',
+            ]},
+            {cat:'Travelers', items:[
+              'Find flights under your budget on Google Flights',
+              'Build day-by-day itineraries for any destination',
+              'Monitor hotel prices and alert on drops',
+              'Research visa requirements and travel advisories',
+            ]},
+            {cat:'Health & Fitness', items:[
+              'Build workout plans and track progress',
+              'Log meals and estimate daily macros',
+              'Research supplements and compare reviews',
+              'Set medication reminders and refill alerts',
+            ]},
+            {cat:'Landlords', items:[
+              'Draft lease agreements from templates',
+              'Track rent payments and send reminders',
+              'Research local rental market rates',
+              'Schedule maintenance and find contractors',
+            ]},
+            {cat:'Writers & Authors', items:[
+              'Outline books and organize chapters',
+              'Research historical details for accuracy',
+              'Draft query letters to literary agents',
+              'Format manuscripts for submission guidelines',
+            ]},
+            {cat:'Social Media Managers', items:[
+              'Schedule posts across Instagram, X, TikTok, LinkedIn',
+              'Generate hashtag sets based on trending topics',
+              'Monitor brand mentions and sentiment',
+              'Create weekly performance reports from analytics',
+            ]},
+            {cat:'Photographers', items:[
+              'Batch rename and organize photo libraries',
+              'Generate client galleries and delivery links',
+              'Edit photos in Photoshop with AI tools',
+              'Draft contracts and pricing sheets',
+            ]},
+            {cat:'Home Projects', items:[
+              'Research materials and compare prices at stores',
+              'Calculate measurements and material quantities',
+              'Find local contractors and check reviews',
+              'Create project timelines and shopping lists',
+            ]},
+          ];
+
+          var SLOTS=4, grid=document.getElementById('useCaseGrid');
+          var showing=[], pool=[];
+
+          function shuf(a){for(var i=a.length-1;i>0;i--){var j=0|Math.random()*(i+1);var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+          var indices=[];for(var i=0;i<cases.length;i++)indices.push(i);
+          shuf(indices);
+          for(var i=0;i<SLOTS;i++) showing.push(indices[i]);
+          for(var i=SLOTS;i<indices.length;i++) pool.push(indices[i]);
+
+          function buildCard(c){
+            var el=document.createElement('div');
+            el.className='card rounded-2xl p-8';
+            el.style.cssText='transition:opacity 0.8s ease;';
+            el.innerHTML='<h3 class="text-lg font-semibold mb-3 gradient-text-warm">'+c.cat+'</h3><ul class="text-sm text-zinc-400 space-y-2">'+c.items.map(function(x){return'<li>&bull; '+x+'</li>';}).join('')+'</ul>';
+            return el;
+          }
+
+          for(var i=0;i<SLOTS;i++) grid.appendChild(buildCard(cases[showing[i]]));
+
+          // Swap 2 cards every 3s with fade
+          setInterval(function(){
+            if(!pool.length)return;
+            var picks=[0,1,2,3];shuf(picks);
+            var count=Math.min(2,pool.length);
+            for(var c=0;c<count;c++){
+              var si=picks[c];
+              var pi=0|Math.random()*pool.length;
+              var old=showing[si];showing[si]=pool[pi];pool[pi]=old;
+              var cell=grid.children[si],cas=cases[showing[si]];
+              cell.style.opacity='0';
+              (function(cell,cas){setTimeout(function(){
+                cell.querySelector('h3').textContent=cas.cat;
+                cell.querySelector('ul').innerHTML=cas.items.map(function(x){return'<li>&bull; '+x+'</li>';}).join('');
+                cell.style.opacity='1';
+              },800);})(cell,cas);
+            }
+          },3000);
+        })();
+      </script>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- HOW IT WORKS -->
+  <section class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-3xl mx-auto text-center">
+      <h2 class="text-3xl md:text-4xl font-bold mb-16 text-white">Setup in <span class="gradient-text">three steps</span></h2>
+      <div class="space-y-4">
+        <div class="card rounded-2xl p-8 text-left">
+          <div class="flex items-start gap-5">
+            <div class="w-10 h-10 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold flex-shrink-0">1</div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 text-zinc-200">Run the installer</h3>
+              <p class="text-sm text-zinc-400">One command. It installs everything and opens a visual setup wizard in your browser — no terminal experience needed.</p>
+              <div class="mono text-xs text-zinc-600 mt-3 bg-white/[0.02] rounded-lg px-4 py-2">curl -fsSL mammals.dev/install.sh | bash</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-line"></div>
+        <div class="card rounded-2xl p-8 text-left">
+          <div class="flex items-start gap-5">
+            <div class="w-10 h-10 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold flex-shrink-0">2</div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 text-zinc-200">Walk through the setup wizard</h3>
+              <p class="text-sm text-zinc-400">A guided web UI opens in your browser. Enter your name, connect Telegram, set up remote access — step by step. Re-access it anytime from HQ settings.</p>
+            </div>
+          </div>
+        </div>
+        <div class="flow-line"></div>
+        <div class="card rounded-2xl p-8 text-left">
+          <div class="flex items-start gap-5">
+            <div class="w-10 h-10 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold flex-shrink-0">3</div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 text-zinc-200">Build your pack</h3>
+              <p class="text-sm text-zinc-400">Create agents with a single message. Give each a code name and a role. They persist and remember everything.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- COMPARISON TABLE -->
+  <section id="compare" class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">How it <span class="gradient-text">compares</span></h2>
+      </div>
+      <div class="rounded-2xl overflow-hidden border border-white/[0.06]">
+        <div class="grid grid-cols-5 gap-px bg-white/[0.04]">
+          <div class="p-4 bg-[#08090d]"><span class="text-sm text-zinc-500">Feature</span></div>
+          <div class="p-4 bg-[#08090d] text-center"><span class="text-sm font-semibold text-orange-400">Mammals</span></div>
+          <div class="p-4 bg-[#08090d] text-center"><span class="text-sm text-zinc-500">Claude Cowork</span></div>
+          <div class="p-4 bg-[#08090d] text-center"><span class="text-sm text-zinc-500">OpenClaw</span></div>
+          <div class="p-4 bg-[#08090d] text-center"><span class="text-sm text-zinc-500">Perplexity Computer</span></div>
+        </div>
+        <div class="comparison-row"><div class="text-sm text-zinc-400">AI cost model</div><div class="text-center text-zinc-200 text-sm">Claude sub — flat rate</div><div class="text-center text-zinc-400 text-sm">Claude sub ($20-$100/mo)</div><div class="text-center text-zinc-500 text-sm">API pay-per-token</div><div class="text-center text-zinc-500 text-sm">Perplexity Max ($200/mo)</div></div>
+        <div class="comparison-row"><div class="text-sm text-zinc-400">Runs 24/7</div><div class="text-center text-zinc-200 text-sm">Yes — starts on boot</div><div class="text-center text-zinc-500 text-sm">No — app must be open</div><div class="text-center text-zinc-300 text-sm">Yes — daemon mode</div><div class="text-center text-zinc-300 text-sm">Yes — always-on</div></div>
+        <div class="comparison-row"><div class="text-sm text-zinc-400">Named agents</div><div class="text-center text-zinc-200 text-sm">Unlimited — persistent</div><div class="text-center text-zinc-400 text-sm">Sub-agent coordination</div><div class="text-center text-zinc-500 text-sm">No named agents</div><div class="text-center text-zinc-500 text-sm">Single agent only</div></div>
+        <div class="comparison-row"><div class="text-sm text-zinc-400">Persistent memory</div><div class="text-center text-zinc-200 text-sm">SQLite + semantic + KG</div><div class="text-center text-zinc-400 text-sm">Per-project memory</div><div class="text-center text-zinc-400 text-sm">Markdown + SQLite</div><div class="text-center text-zinc-500 text-sm">Session history only</div></div>
+        <div class="comparison-row"><div class="text-sm text-zinc-400">Autonomous</div><div class="text-center text-zinc-200 text-sm">14 built-in systems</div><div class="text-center text-zinc-500 text-sm">User-initiated</div><div class="text-center text-zinc-500 text-sm">Cron only</div><div class="text-center text-zinc-400 text-sm">Task-based</div></div>
+        <div class="comparison-row"><div class="text-sm text-zinc-400">Mobile access</div><div class="text-center text-zinc-200 text-sm">HQ + Telegram</div><div class="text-center text-zinc-400 text-sm">Claude app + Channels</div><div class="text-center text-zinc-300 text-sm">Telegram, Discord, 50+</div><div class="text-center text-zinc-400 text-sm">Perplexity app</div></div>
+        <div class="comparison-row"><div class="text-sm text-zinc-400">Community</div><div class="text-center text-zinc-500 text-sm">New — growing</div><div class="text-center text-zinc-300 text-sm">Anthropic ecosystem</div><div class="text-center text-zinc-300 text-sm">5,400+ skills</div><div class="text-center text-zinc-400 text-sm">Enterprise focused</div></div>
+        <div class="comparison-row"><div class="text-sm text-zinc-400">Total cost</div><div class="text-center text-zinc-200 text-sm font-semibold">Free + Claude sub</div><div class="text-center text-zinc-400 text-sm">$20-$200/mo</div><div class="text-center text-zinc-400 text-sm">Free + API costs</div><div class="text-center text-zinc-500 text-sm">$599 + $200/mo</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- BAN-PROOF -->
+  <section class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">Other frameworks get <span class="text-red-500">banned</span>. Mammals <span class="gradient-text">can't</span>.</h2>
+        <p class="text-zinc-400 text-lg max-w-2xl mx-auto">
+          Third-party agent frameworks keep getting shut down by AI providers. Mammals is built different — it runs natively on Claude Code, not on top of it.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8 mb-12">
+        <div class="rounded-2xl border border-red-500/15 bg-red-500/[0.03] p-8">
+          <h3 class="text-lg font-semibold text-red-400 mb-4">How other frameworks work</h3>
+          <ul class="text-sm text-zinc-400 space-y-3">
+            <li class="flex items-start gap-2"><span class="text-red-500 mt-0.5">&#x2717;</span> Call the Claude API directly as a third-party wrapper</li>
+            <li class="flex items-start gap-2"><span class="text-red-500 mt-0.5">&#x2717;</span> Build proprietary orchestration layers on top</li>
+            <li class="flex items-start gap-2"><span class="text-red-500 mt-0.5">&#x2717;</span> Depend on API access that can be revoked at any time</li>
+            <li class="flex items-start gap-2"><span class="text-red-500 mt-0.5">&#x2717;</span> Violate terms of service with automated API usage</li>
+            <li class="flex items-start gap-2"><span class="text-red-500 mt-0.5">&#x2717;</span> One policy change = your entire system goes dark</li>
+          </ul>
+        </div>
+        <div class="rounded-2xl border border-orange-500/15 bg-orange-500/[0.03] p-8">
+          <h3 class="text-lg font-semibold text-orange-400 mb-4">How Mammals works</h3>
+          <ul class="text-sm text-zinc-400 space-y-3">
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> Runs inside Claude Code — Anthropic's own product</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> Uses <code class="text-xs text-zinc-500">claude -p</code> CLI, the official interface</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> No API keys, no third-party wrappers, no middlemen</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> Your Claude subscription powers everything</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> Banning Mammals would mean banning Claude Code itself</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-white/[0.06] bg-[#08090d] p-8 text-center mb-12">
+        <p class="text-zinc-300 text-lg mb-2">Mammals isn't built <em>on</em> Claude. It's built <em>inside</em> Claude.</p>
+        <p class="text-zinc-500 text-sm">The same way a shell script can't be "banned" from Terminal — Mammals is just Claude Code doing what Claude Code was designed to do. Persistent sessions, tool use, file access, shell commands. No hacks, no exploits, no workarounds.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- SECURITY -->
+  <section class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">Built for <span class="gradient-text">privacy by default</span></h2>
+        <p class="text-zinc-400 max-w-xl mx-auto">Mammals runs on your hardware. Your data never touches a third-party server.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6 mb-12">
+        <div class="card rounded-2xl p-8"><div class="mono text-xs text-orange-400/60 uppercase tracking-widest mb-4">local</div><h3 class="text-lg font-semibold mb-2 text-zinc-200">Local-first</h3><p class="text-zinc-400 text-sm leading-relaxed">Everything runs on your own machine. Your files, your API keys, your conversations — none of it leaves your hardware.</p></div>
+        <div class="card rounded-2xl p-8"><div class="mono text-xs text-orange-400/60 uppercase tracking-widest mb-4">.env</div><h3 class="text-lg font-semibold mb-2 text-zinc-200">You own your keys</h3><p class="text-zinc-400 text-sm leading-relaxed">API credentials are stored in a local <span class="mono text-xs text-zinc-500">.env</span> file only you can access. No cloud vaults.</p></div>
+        <div class="card rounded-2xl p-8"><div class="mono text-xs text-orange-400/60 uppercase tracking-widest mb-4">lan</div><h3 class="text-lg font-semibold mb-2 text-zinc-200">Network-only access</h3><p class="text-zinc-400 text-sm leading-relaxed">Mammals HQ is only accessible on your local network — never exposed to the internet. Add Tailscale for secure remote access from anywhere.</p></div>
+        <div class="card rounded-2xl p-8"><div class="mono text-xs text-orange-400/60 uppercase tracking-widest mb-4">sudo</div><h3 class="text-lg font-semibold mb-2 text-zinc-200">Explicit guardrails</h3><p class="text-zinc-400 text-sm leading-relaxed">Destructive actions — deleting files, force pushes, dropping databases — always require your confirmation.</p></div>
+        <div class="card rounded-2xl p-8"><div class="mono text-xs text-orange-400/60 uppercase tracking-widest mb-4">1 user</div><h3 class="text-lg font-semibold mb-2 text-zinc-200">Single-user access</h3><p class="text-zinc-400 text-sm leading-relaxed">Mammals only responds to you. HQ runs on your local network, Telegram is locked to your account. No multi-tenant risk.</p></div>
+        <div class="card rounded-2xl p-8"><div class="mono text-xs text-orange-400/60 uppercase tracking-widest mb-4">log</div><h3 class="text-lg font-semibold mb-2 text-zinc-200">Full audit trail</h3><p class="text-zinc-400 text-sm leading-relaxed">Every action is logged locally. See exactly what happened, when, and what the result was.</p></div>
+      </div>
+      <div class="rounded-2xl border border-orange-500/15 bg-orange-500/[0.03] p-8 text-center">
+        <p class="text-zinc-300 text-lg mb-2">Your data is never used to train models.</p>
+        <p class="text-zinc-500 text-sm">Claude Code conversations fall under Anthropic's standard privacy policy. No third-party data processing.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- REMOTE ACCESS -->
+  <section class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">Access from <span class="gradient-text">anywhere</span></h2>
+        <p class="text-zinc-400 text-lg max-w-2xl mx-auto">Your pack runs on one machine. You control it from all of them.</p>
+      </div>
+
+      <!-- IDEAL SETUP DIAGRAM -->
+      <div class="rounded-2xl border border-orange-500/20 bg-orange-500/[0.02] p-8 md:p-12 mb-12 relative overflow-hidden">
+        <div class="hero-glow" style="top:-80px;right:-80px;background:#f97316;opacity:0.12;width:300px;height:300px;"></div>
+        <div class="relative z-10">
+          <div class="flex items-center gap-2 mb-6">
+            <div class="w-2 h-2 rounded-full bg-orange-400"></div>
+            <span class="text-orange-400 text-xs font-semibold uppercase tracking-wider">The ideal setup</span>
+          </div>
+
+          <div class="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-4 mb-8">
+            <!-- Home server -->
+            <div class="flex flex-col items-center text-center">
+              <div class="w-20 h-20 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mono text-xs text-orange-400 font-bold mb-3">SERVER</div>
+              <div class="text-sm font-semibold text-white">Mac Mini / Desktop</div>
+              <div class="text-xs text-zinc-500 mt-1">Always on, always home</div>
+              <div class="mono text-[10px] text-orange-400/60 mt-1">Mammals runs here 24/7</div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flex flex-col items-center gap-1">
+              <div class="hidden md:block text-zinc-600 text-2xl">&harr;</div>
+              <div class="md:hidden text-zinc-600 text-2xl">&updownarrow;</div>
+              <div class="mono text-[10px] text-cyan-400/60">Tailscale</div>
+              <div class="mono text-[10px] text-zinc-600">encrypted mesh</div>
+            </div>
+
+            <!-- Laptop -->
+            <div class="flex flex-col items-center text-center">
+              <div class="w-20 h-20 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center mono text-xs text-zinc-400 font-bold mb-3">LAPTOP</div>
+              <div class="text-sm font-semibold text-zinc-200">Laptop</div>
+              <div class="text-xs text-zinc-500 mt-1">Full HQ dashboard</div>
+              <div class="mono text-[10px] text-zinc-600 mt-1">http://100.x.x.x:5067</div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="flex flex-col items-center gap-1">
+              <div class="hidden md:block text-zinc-600 text-2xl">&harr;</div>
+              <div class="md:hidden text-zinc-600 text-2xl">&updownarrow;</div>
+              <div class="mono text-[10px] text-cyan-400/60">Tailscale</div>
+              <div class="mono text-[10px] text-zinc-600">encrypted mesh</div>
+            </div>
+
+            <!-- Phone -->
+            <div class="flex flex-col items-center text-center">
+              <div class="w-20 h-20 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center mono text-xs text-zinc-400 font-bold mb-3">PHONE</div>
+              <div class="text-sm font-semibold text-zinc-200">Phone</div>
+              <div class="text-xs text-zinc-500 mt-1">PWA app + Telegram</div>
+              <div class="mono text-[10px] text-zinc-600 mt-1">Same HQ, native feel</div>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-4 text-sm">
+            <div class="flex gap-3">
+              <span class="text-orange-400 shrink-0 mt-0.5">&#10003;</span>
+              <span class="text-zinc-400">Dedicated machine runs your pack 24/7 — a Mac Mini, old laptop, or any always-on computer</span>
+            </div>
+            <div class="flex gap-3">
+              <span class="text-orange-400 shrink-0 mt-0.5">&#10003;</span>
+              <span class="text-zinc-400">Tailscale connects all your devices over an encrypted private network — free, zero-config</span>
+            </div>
+            <div class="flex gap-3">
+              <span class="text-orange-400 shrink-0 mt-0.5">&#10003;</span>
+              <span class="text-zinc-400">Open HQ from any device, anywhere — coffee shop, airport, bed. Same dashboard, same agents</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCESS METHODS -->
+      <div class="grid md:grid-cols-3 gap-6 mb-12">
+        <div class="card rounded-2xl p-8 relative overflow-hidden">
+          <div class="absolute top-4 right-4 text-xs font-semibold bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full">Local</div>
+          <div class="mono text-xs text-orange-400/60 uppercase tracking-widest mb-4">hq</div>
+          <h3 class="text-lg font-semibold mb-2 text-zinc-200">Mammals HQ</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed mb-4">Built-in dashboard. Chat, manage agents, monitor activity — any browser on your local network.</p>
+          <div class="rounded-lg bg-black/30 border border-white/[0.04] p-3 mono text-xs text-zinc-500">http://your-machine:5067</div>
+        </div>
+
+        <div class="card rounded-2xl p-8 relative overflow-hidden">
+          <div class="absolute top-4 right-4 text-xs font-semibold bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full">Remote</div>
+          <div class="mono text-xs text-cyan-400/60 uppercase tracking-widest mb-4">vpn</div>
+          <h3 class="text-lg font-semibold mb-2 text-zinc-200">Tailscale VPN</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed mb-4">Encrypted mesh network between your devices. HQ becomes accessible from anywhere — no port forwarding, no exposed servers.</p>
+          <div class="rounded-lg bg-black/30 border border-white/[0.04] p-3 mono text-xs text-zinc-500">http://100.x.x.x:5067</div>
+        </div>
+
+        <div class="card rounded-2xl p-8 relative overflow-hidden">
+          <div class="absolute top-4 right-4 text-xs font-semibold bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">Fallback</div>
+          <div class="mono text-xs text-blue-400/60 uppercase tracking-widest mb-4">tg</div>
+          <h3 class="text-lg font-semibold mb-2 text-zinc-200">Telegram</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed mb-4">Message your agents from any Telegram client. Works even without VPN — always available as a backup.</p>
+          <div class="rounded-lg bg-black/30 border border-white/[0.04] p-3 mono text-xs text-zinc-500">@your_bot on Telegram</div>
+        </div>
+      </div>
+
+      <!-- PWA + TAILSCALE DETAIL -->
+      <div class="grid md:grid-cols-2 gap-6 mb-12">
+        <div class="rounded-2xl border border-cyan-500/10 bg-cyan-500/[0.02] p-8">
+          <h3 class="text-lg font-semibold text-cyan-400 mb-3">PWA — install it like an app</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed mb-4">Open HQ in Safari or Chrome, tap "Add to Home Screen." Full-screen, no browser chrome, instant launch — feels native on any device.</p>
+          <ul class="text-sm text-zinc-500 space-y-2">
+            <li class="flex items-start gap-2"><span class="text-cyan-400 mt-0.5">&#10003;</span> Works on iOS, Android, Mac, Windows</li>
+            <li class="flex items-start gap-2"><span class="text-cyan-400 mt-0.5">&#10003;</span> No App Store, no downloads, no updates</li>
+          </ul>
+        </div>
+
+        <div class="rounded-2xl border border-orange-500/10 bg-orange-500/[0.02] p-8">
+          <h3 class="text-lg font-semibold text-orange-400 mb-3">Why Tailscale?</h3>
+          <p class="text-zinc-400 text-sm leading-relaxed mb-4">Private encrypted network between your devices. Your Mammals instance stays invisible to everyone else. Free for personal use.</p>
+          <ul class="text-sm text-zinc-500 space-y-2">
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> Zero-config — install and it works</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> WireGuard encryption — fast and secure</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> No open ports, no dynamic DNS, no firewall rules</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- WHY NOT DIY -->
+  <section class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">Why not just <span class="text-zinc-500">build it yourself?</span></h2>
+        <p class="text-zinc-500 text-lg max-w-xl mx-auto">You can. Here's what you're signing up for.</p>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6 mb-12">
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+          <div class="mono text-xs text-zinc-600 uppercase tracking-widest mb-3">01</div>
+          <h3 class="font-semibold text-white mb-2">Even with Claude Code, it's a grind</h3>
+          <p class="text-zinc-500 text-sm leading-relaxed">Session management, MCP integrations, cron scheduler, browser automation, voice, persistent memory, crash recovery, boot config — a lot of trial and error before anything works.</p>
+        </div>
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+          <div class="mono text-xs text-zinc-600 uppercase tracking-widest mb-3">02</div>
+          <h3 class="font-semibold text-white mb-2">The traps are non-obvious</h3>
+          <p class="text-zinc-500 text-sm leading-relaxed">Session poisoning. Context window management. Prompt injection. Race conditions. Dead sessions that look alive. You don't know what you don't know — until it silently fails at 2am.</p>
+        </div>
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+          <div class="mono text-xs text-zinc-600 uppercase tracking-widest mb-3">03</div>
+          <h3 class="font-semibold text-white mb-2">Maintenance is the real cost</h3>
+          <p class="text-zinc-500 text-sm leading-relaxed">APIs change. MCP servers update. Claude models evolve. Keeping it working is its own job.</p>
+        </div>
+        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
+          <div class="mono text-xs text-zinc-600 uppercase tracking-widest mb-3">04</div>
+          <h3 class="font-semibold text-white mb-2">Memory systems aren't trivial</h3>
+          <p class="text-zinc-500 text-sm leading-relaxed">Semantic search, salience decay, episodic memory, knowledge graphs, contradiction detection — Mammals ships all of it wired together.</p>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-orange-500/20 bg-orange-500/[0.03] p-8 text-center">
+        <p class="text-zinc-300 text-lg mb-2">Skip the months of debugging and start using it today.</p>
+        <p class="text-zinc-500 text-sm">You can absolutely build this yourself — Mammals saves you the pain. Free to use, pay what you wish if it's useful.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- PRICING -->
+  <section id="pricing" class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">Pay what you wish</h2>
+        <p class="text-zinc-500 text-lg">Free to download. No subscriptions. No per-message fees. Support development if it's useful to you.</p>
+      </div>
+      <div class="flex justify-center">
+        <div class="pricing-card featured max-w-md w-full">
+          <div class="absolute top-4 right-4 text-xs font-semibold bg-orange-500/20 text-orange-300 px-3 py-1 rounded-full">Pay What You Wish</div>
+          <h3 class="text-lg font-semibold mb-2 text-zinc-200">Everything. No catch.</h3>
+          <p class="text-sm text-zinc-500 mb-6">No subscriptions. No tiers. No gotchas.</p>
+          <div class="mb-2"><span class="text-5xl font-bold text-white">$0+</span></div>
+          <p class="text-xs text-zinc-600 mb-8">free &middot; suggested $20</p>
+          <ul class="text-sm text-zinc-400 space-y-3 mb-8">
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> Unlimited named agents — persistent memory, profiles, journals</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> Mammals HQ dashboard + Telegram backup</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> 14 autonomous systems including dreaming memory</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> Browser automation, voice, cron scheduler</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> MCP integrations (Notion, Photoshop, Premiere, and more)</li>
+            <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">&#10003;</span> Self-modifying — builds its own skills and tools</li>
+          </ul>
+          <a href="https://letsgodaemon.gumroad.com/l/mammals" class="btn-primary w-full justify-center text-base py-3 no-underline" style="text-decoration:none;">Get Mammals — Free &rarr;</a>
+        </div>
+      </div>
+      <p class="text-center text-sm text-zinc-600 mt-8">Requires Claude Pro or Max subscription (separate, from Anthropic). Personal use license.</p>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- FINAL CTA -->
+  <section class="py-28 px-6 scroll-fade-in">
+    <div class="max-w-3xl mx-auto text-center">
+      <h2 class="text-3xl md:text-5xl font-bold mb-6 text-white">Build your pack.</h2>
+      <p class="text-lg text-zinc-400 mb-10 max-w-lg mx-auto">
+        A persistent AI system that runs on your hardware. Your agents. Your rules. Always on.
+      </p>
+      <a href="https://letsgodaemon.gumroad.com/l/mammals" class="btn-primary text-lg px-10 py-4" style="text-decoration:none;">Get Mammals — Free &rarr;</a>
+      <p class="text-sm text-zinc-600 mt-4">macOS &middot; Powered by Claude &middot; Pay what you wish</p>
+    </div>
+  </section>
+
+  <footer class="border-t border-white/[0.04] py-12 px-6">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <span class="text-xl font-black text-white tracking-tight">mammals</span>
+      <div class="flex gap-8 text-sm text-zinc-600">
+        <a href="#features" class="hover:text-zinc-400 transition">Features</a>
+        <a href="#pricing" class="hover:text-zinc-400 transition">Get it</a>
+        <a href="https://github.com/Mammals-AI/mammals/issues" class="hover:text-zinc-400 transition">Contact</a>
+      </div>
+      <div class="text-xs text-zinc-800">&copy; 2026 Mammals. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.scroll-fade-in').forEach(el => observer.observe(el));
+    const nav = document.querySelector('.nav-bar');
+    window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', window.scrollY > 60); });
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => { e.preventDefault(); const t=document.querySelector(a.getAttribute('href')); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); });
+    });
+  </script>
+  <script>
+    (function() {
+      const phrases = ['Always on.', 'Always hunting.', 'Always building.'];
+      const el = document.getElementById('hero-cycle');
+      let i = 0;
+      setInterval(() => { el.style.opacity='0'; setTimeout(()=>{ i=(i+1)%phrases.length; el.textContent=phrases[i]; el.style.opacity='1'; }, 400); }, 2500);
+    })();
+  </script>
+  <script>
+    // Agent carousel
+    (function() {
+      const track = document.getElementById('agentCarousel');
+      const dotsContainer = document.getElementById('carouselDots');
+      if (!track) return;
+      const cards = track.querySelectorAll('.mammal-card');
+      const cardCount = cards.length;
+      // Build dots
+      for (let i = 0; i < cardCount; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => { cards[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); };
+        dotsContainer.appendChild(dot);
+      }
+      const dots = dotsContainer.querySelectorAll('.dot');
+      // Update active dot on scroll
+      const scrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            const idx = Array.from(cards).indexOf(e.target);
+            dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+          }
+        });
+      }, { root: track, threshold: 0.6 });
+      cards.forEach(c => scrollObserver.observe(c));
+      // Auto-scroll
+      let autoScroll = setInterval(() => { scrollCarousel(1); }, 4000);
+      track.addEventListener('pointerdown', () => { clearInterval(autoScroll); });
+      track.addEventListener('touchstart', () => { clearInterval(autoScroll); }, { passive: true });
+      // Restart auto-scroll after 10s of no interaction
+      let restartTimer;
+      function restartAuto() {
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(() => { autoScroll = setInterval(() => { scrollCarousel(1); }, 4000); }, 10000);
+      }
+      track.addEventListener('pointerup', restartAuto);
+      track.addEventListener('touchend', restartAuto);
+    })();
+    function scrollCarousel(dir) {
+      const track = document.getElementById('agentCarousel');
+      if (!track) return;
+      const cardW = track.querySelector('.mammal-card').offsetWidth + 24;
+      const maxScroll = track.scrollWidth - track.clientWidth;
+      let target = track.scrollLeft + (dir * cardW);
+      // Loop back to start/end
+      if (target > maxScroll + 10) target = 0;
+      else if (target < -10) target = maxScroll;
+      track.scrollTo({ left: target, behavior: 'smooth' });
+    }
+  </script>
+  <script>
+    (function() {
+      const facts = [
+        'mammals \u00B7 warm-blooded \u00B7 persistent \u00B7 adaptive',
+        'the only class of animal that nurses its young \u2014 invested from day one',
+        'largest brains relative to body size of any animal group',
+        'survived the extinction event that killed everything else',
+        'highly social \u00B7 communicate across distance \u00B7 remember their pack',
+        'your agents \u00B7 always running \u00B7 always learning \u00B7 always on call',
+      ];
+      const el = document.getElementById('mammal-def');
+      let i = 0;
+      el.textContent = facts[0]; el.style.opacity = '1';
+      setInterval(() => { el.style.opacity='0'; setTimeout(()=>{ i=(i+1)%facts.length; el.textContent=facts[i]; el.style.opacity='1'; }, 500); }, 4000);
+    })();
+  </script>
+</body>
+</html>

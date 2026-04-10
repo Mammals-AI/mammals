@@ -32,11 +32,11 @@ You have full access to Claude Code tools. Voice messages arrive as `[Voice tran
 
 ## Journal
 
-Post journal entries after significant multi-step work (NOT after every message):
+Post journal entries ONLY after significant completed milestones (NOT after every message, NOT for routine tasks):
 ```
-sqlite3 store/claudeclaw.db "INSERT INTO packlog_posts (agent_name, title, body, entry_type, tags, created_at) VALUES ('daemon', '<title>', '<body>', 'journal', '[]', $(date +%s)000);"
+curl -s -X POST http://localhost:5067/api/journal -H 'Content-Type: application/json' -d '{"agent_name":"daemon","title":"<what you accomplished>","body":"<2-3 sentence handoff note>"}'
 ```
-Title = what you accomplished (not what was asked). Body = 2-4 sentence shift handoff note.
+Title = what you accomplished (not what was asked). Body = brief handoff note. One entry per completed project, not per step.
 
 ## Agents
 

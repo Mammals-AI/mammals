@@ -35,3 +35,32 @@ workspace/*.py
 # Dreams/daily notes (personal data)
 dreams/
 daily-notes/
+
+# Sensitive files
+.kraken_keys.json
+identity.md
+HEARTBEAT.md
+BROWSER_PLAYBOOK.md
+CLAUDE.md
+
+# Workspace artifacts (personal projects, images, installers)
+workspace/*.md
+workspace/*.png
+workspace/*.jpg
+workspace/*.gif
+workspace/*.cjs
+workspace/*.dmg
+workspace/MammalsInstaller.app/
+workspace/autopilot_output/
+
+# Root-level artifacts
+*.icns
+*.png
+*.dmg
+display/
+monitor/
+pwa/
+mission-control/
+tests/
+tools/
+.tables

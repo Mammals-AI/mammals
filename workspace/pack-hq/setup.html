@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mammals — Setup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', -apple-system, sans-serif; }
+    code, .mono { font-family: 'JetBrains Mono', monospace; }
+    body { background: #08090d; color: #e4e4e7; min-height: 100vh; }
+    .gradient-text {
+      background: linear-gradient(135deg, #f97316, #fb923c, #fbbf24);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .step-card {
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 32px; transition: all 0.3s;
+    }
+    .step-card.active { border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.03); }
+    .step-card.done { border-color: rgba(34,197,94,0.2); background: rgba(34,197,94,0.02); }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; flex-shrink: 0;
+    }
+    .step-num.pending { background: rgba(255,255,255,0.06); color: #71717a; }
+    .step-num.active { background: rgba(249,115,22,0.2); color: #f97316; }
+    .step-num.done { background: rgba(34,197,94,0.2); color: #22c55e; }
+    input[type="text"], input[type="password"], select {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 10px 14px; font-size: 14px; color: #e4e4e7;
+      outline: none; transition: border-color 0.2s;
+    }
+    input:focus, select:focus { border-color: rgba(249,115,22,0.5); }
+    .btn {
+      background: #f97316; color: white; padding: 10px 24px; border-radius: 10px;
+      font-weight: 600; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn:hover { background: #ea580c; transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      background: transparent; color: #e4e4e7; padding: 10px 24px; border-radius: 10px;
+      font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.15); cursor: pointer;
+    }
+    .btn-secondary:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.03); }
+    .check-ok { color: #22c55e; }
+    .check-warn { color: #eab308; }
+    .check-fail { color: #ef4444; }
+    .info-box {
+      background: rgba(249,115,22,0.05); border: 1px solid rgba(249,115,22,0.15);
+      border-radius: 10px; padding: 16px; font-size: 13px; color: #a1a1aa;
+    }
+    .progress-bar {
+      height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: linear-gradient(90deg, #f97316, #fb923c);
+      transition: width 0.5s ease; border-radius: 2px;
+    }
+    .status-line { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 4px 0; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(249,115,22,0.3);
+      border-top-color: #f97316; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .step-body { display: none; margin-top: 20px; }
+    .step-body.visible { display: block; }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Help chat widget */
+    .help-fab {
+      position: fixed; bottom: 24px; right: 24px; z-index: 100;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: #f97316; color: white; border: none; cursor: pointer;
+      display: none; align-items: center; justify-content: center;
+      font-size: 22px; box-shadow: 0 4px 20px rgba(249,115,22,0.4);
+      transition: all 0.2s;
+    }
+    .help-fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(249,115,22,0.5); }
+    .help-fab.has-panel { background: #71717a; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .help-panel {
+      position: fixed; bottom: 88px; right: 24px; z-index: 100;
+      width: 360px; max-height: 480px; border-radius: 16px;
+      background: #0d0e14; border: 1px solid rgba(255,255,255,0.08);
+      display: none; flex-direction: column; overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .help-header {
+      padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .help-msgs {
+      flex: 1; overflow-y: auto; padding: 14px 18px;
+      display: flex; flex-direction: column; gap: 10px;
+      max-height: 320px; min-height: 120px;
+    }
+    .help-msg {
+      font-size: 13px; line-height: 1.5; padding: 10px 14px;
+      border-radius: 14px; max-width: 90%; word-break: break-word; white-space: pre-wrap;
+    }
+    .help-msg.bot { background: rgba(255,255,255,0.04); color: #d4d4d8; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .help-msg.user { background: rgba(249,115,22,0.15); color: #e4e4e7; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .help-msg.typing { color: #71717a; font-style: italic; }
+    .help-input-wrap {
+      padding: 10px 14px; border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex; gap: 8px; align-items: center;
+    }
+    .help-input {
+      flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 8px 12px; font-size: 13px; color: #e4e4e7; outline: none;
+    }
+    .help-input:focus { border-color: rgba(249,115,22,0.4); }
+    .help-send {
+      width: 32px; height: 32px; border-radius: 8px; background: #f97316;
+      border: none; color: white; cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .help-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    @media (max-width: 480px) {
+      .help-panel { width: calc(100vw - 32px); right: 16px; bottom: 80px; }
+      .help-fab { bottom: 16px; right: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="max-w-2xl mx-auto px-6 py-12">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-black tracking-tight text-white mb-2">mammals</h1>
+      <p class="text-zinc-500">Setup Wizard</p>
+    </div>
+
+    <!-- Progress -->
+    <div class="mb-8">
+      <div class="flex justify-between text-xs text-zinc-600 mb-2">
+        <span>Step <span id="currentStep">1</span> of 4</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+
+    <!-- Step 1: System Check -->
+    <div class="step-card active mb-4" id="step1card">
+      <div class="flex items-center gap-4">
+        <div class="step-num active" id="step1num">1</div>
+        <div>
+          <div class="font-semibold text-white">System Check</div>
+          <div class="text-xs text-zinc-500">Checking your machine has everything needed</div>
+        </div>
+      </div>
+      <div class="step-body visible" id="step1body">
+        <div id="sysChecks" class="space-y-2 mb-4">
+          <div class="status-line"><span class="spinner"></span> Checking system...</div>
+        </div>
+        <div class="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 mb-6 text-xs text-zinc-500">
+          <strong class="text-zinc-400">Heads up:</strong> If anything needs to install, your Mac may ask for your password or show an "Install Command Line Tools" popup. These are normal — just click <strong class="text-zinc-400">Install</strong> or enter your password when asked.
+        </div>
+        <button class="btn" id="step1next" disabled onclick="goStep(2)">Continue</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Claude Code -->
+    <div class="step-card mb-4" id="step2card">
+      <div class="flex items-center gap-4">
+        <div class="step-num pending" id="step2num">2</div>
+        <div>
+          <div class="font-semibold text-zinc-400" id="step2title">Claude Code</div>
+          <div class="text-xs text-zinc-600">Your AI brain — powers everything</div>
+        </div>
+      </div>
+      <div class="step-body" id="step2body">
+        <div class="info-box mb-4">
+          <p class="mb-2"><strong class="text-zinc-300">Claude Code</strong> is the AI engine that powers Mammals. You need a Claude Pro or Max subscription from Anthropic.</p>
+          <p class="mb-2">If you don't have it installed yet:</p>
+          <ol class="list-decimal ml-4 space-y-1">
+            <li>Go to <a href="https://docs.anthropic.com/en/docs/claude-code/overview" target="_blank" class="text-orange-400 underline">Claude Code install page</a></li>
+            <li>Follow the install instructions for Mac</li>
+            <li><a href="#" onclick="openTerminal();return false;" class="text-orange-400 underline">Open Terminal</a> and run: <code class="text-xs bg-white/5 px-1 rounded">claude login</code></li>
+            <li>Come back here and click "Check Again"</li>
+          </ol>
+          <div class="mt-3 pt-3" style="border-top:1px solid rgba(255,255,255,0.06);">
+            <button onclick="document.getElementById('terminalHelp').classList.toggle('hidden')" class="text-xs text-orange-400 underline cursor-pointer" style="background:none;border:none;padding:0;">New to Terminal? Click here for help</button>
+            <div id="terminalHelp" class="hidden mt-2 text-xs space-y-2" style="color:#a1a1aa;">
+              <p><strong class="text-zinc-300">What is Terminal?</strong> It's a built-in app on every Mac that lets you type commands. Think of it like texting your computer — you type a command, press Enter, and it does something.</p>
+              <p><strong class="text-zinc-300">How to open it:</strong></p>
+              <ul class="ml-3 space-y-1">
+                <li>&#8226; Press <kbd class="bg-white/5 px-1.5 py-0.5 rounded text-zinc-300">Cmd</kbd> + <kbd class="bg-white/5 px-1.5 py-0.5 rounded text-zinc-300">Space</kbd> to open Spotlight</li>
+                <li>&#8226; Type <strong class="text-zinc-300">Terminal</strong> and press Enter</li>
+                <li>&#8226; Or click <a href="#" onclick="openTerminal();return false;" class="text-orange-400 underline">here to open it automatically</a></li>
+              </ul>
+              <p><strong class="text-zinc-300">How to run a command:</strong> When Terminal opens, you'll see a blinking cursor. Just type (or paste) the command and press <kbd class="bg-white/5 px-1.5 py-0.5 rounded text-zinc-300">Enter</kbd>. That's it.</p>
+              <p><strong class="text-zinc-300">How to paste:</strong> Press <kbd class="bg-white/5 px-1.5 py-0.5 rounded text-zinc-300">Cmd</kbd> + <kbd class="bg-white/5 px-1.5 py-0.5 rounded text-zinc-300">V</kbd> — same as any other app.</p>
+              <p class="text-zinc-500">Don't worry — you won't break anything. Terminal only does what you tell it to.</p>
+            </div>
+          </div>
+        </div>
+        <div id="claudeStatus" class="mb-4"></div>
+        <div class="flex gap-3">
+          <button class="btn" id="step2check" onclick="checkClaude()">Check Claude Status</button>
+          <button class="btn" id="step2next" disabled onclick="goStep(3)">Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Identity -->
+    <div class="step-card mb-4" id="step3card">
+      <div class="flex items-center gap-4">
+        <div class="step-num pending" id="step3num">3</div>
+        <div>
+          <div class="font-semibold text-zinc-400" id="step3title">Your Identity</div>
+          <div class="text-xs text-zinc-600">Name and dashboard security</div>
+        </div>
+      </div>
+      <div class="step-body" id="step3body">
+        <div class="space-y-4 mb-6">
+          <div>
+            <label class="text-sm text-zinc-400 mb-1 block">Your name <span class="text-zinc-600">(what the AI calls you)</span></label>
+            <input type="text" id="ownerName" placeholder="e.g. Alex">
+          </div>
+          <div>
+            <label class="text-sm text-zinc-400 mb-1 block">HQ PIN <span class="text-zinc-600">(optional — leave blank for no login screen)</span></label>
+            <input type="text" id="hqPin" placeholder="Leave blank to skip, or set a 4+ digit code">
+          </div>
+        </div>
+        <button class="btn" id="step3next" onclick="goStep(4)">Continue</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Build & Launch -->
+    <div class="step-card mb-4" id="step4card">
+      <div class="flex items-center gap-4">
+        <div class="step-num pending" id="step4num">4</div>
+        <div>
+          <div class="font-semibold text-zinc-400" id="step6title">Build & Launch</div>
+          <div class="text-xs text-zinc-600">Save config, build, and start Mammals</div>
+        </div>
+      </div>
+      <div class="step-body" id="step4body">
+        <div class="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 mb-4 text-xs text-zinc-500">
+          <strong class="text-zinc-400">Heads up:</strong> After building, your Mac may ask "Allow Python to accept incoming connections?" and "Allow Node to accept incoming connections?" — click <strong class="text-zinc-400">Allow</strong> on both. This is how HQ and the bot communicate.
+        </div>
+        <div id="buildLog" class="space-y-2 mb-6"></div>
+        <div id="buildActions">
+          <button class="btn" id="buildBtn" onclick="runBuild()">Save & Build</button>
+        </div>
+        <!-- Remote access prompt -->
+        <div id="remotePrompt" class="hidden fade-in">
+          <div class="rounded-2xl border border-orange-500/15 bg-orange-500/[0.03] p-8 mb-6">
+            <h3 class="text-lg font-semibold text-white mb-2">Want to set up remote access?</h3>
+            <p class="text-zinc-400 text-sm mb-2">Right now HQ only works on this Mac. With <strong class="text-zinc-300">Tailscale</strong> (free, 2 minutes to set up), you can access it from your phone, laptop, or anywhere.</p>
+            <p class="text-zinc-500 text-sm mb-4">You can also add Telegram for mobile chat and voice features.</p>
+            <div class="flex gap-3">
+              <button class="btn" onclick="showRemoteSetup()">Set it up now</button>
+              <button class="btn-secondary" onclick="skipToHQ()">Skip for now &rarr;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remote access setup (hidden until user clicks "Set it up now") -->
+        <div id="remoteSetup" class="hidden fade-in">
+          <div class="step-card mb-4" style="border-color:rgba(249,115,22,0.2);">
+            <h3 class="text-base font-semibold text-white mb-1">Telegram</h3>
+            <p class="text-xs text-zinc-500 mb-3">Chat with your AI from your phone anywhere</p>
+            <div>
+              <label class="text-sm text-zinc-400 mb-1 block">Bot Token</label>
+              <input type="text" id="botToken" placeholder="Paste token from @BotFather">
+              <div class="info-box mt-2">
+                <p class="mb-1">To get a token:</p>
+                <ol class="list-decimal ml-4 space-y-1">
+                  <li>Open Telegram, search for <strong class="text-zinc-300">@BotFather</strong></li>
+                  <li>Send <code class="text-xs bg-white/5 px-1 rounded">/newbot</code></li>
+                  <li>Pick a name and username</li>
+                  <li>Copy the token it gives you and paste above</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-card mb-4" style="border-color:rgba(249,115,22,0.25);background:rgba(249,115,22,0.03);">
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="text-base font-semibold text-white">Tailscale</h3>
+              <span class="text-[10px] font-semibold bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full">Recommended</span>
+            </div>
+            <p class="text-xs text-zinc-500 mb-2">Access HQ from your phone, laptop, or anywhere — not just this computer. Free for personal use. This is the easiest way to use Mammals on the go.</p>
+            <div class="rounded-lg bg-white/[0.02] border border-white/[0.04] p-2 mb-3 text-[11px] text-zinc-500">
+              <strong class="text-zinc-400">What to expect:</strong> When you install Tailscale, your Mac will ask to allow a VPN configuration — click <strong class="text-zinc-400">Allow</strong> and enter your password. This is how it creates the private network. No other settings need to change.
+            </div>
+            <div id="tailscaleStatus" class="mb-3"></div>
+            <div id="tailscaleQR" class="hidden mb-4 fade-in"></div>
+            <div class="flex gap-3 flex-wrap">
+              <button class="btn-secondary" onclick="checkTailscale()" style="padding:6px 16px;font-size:13px;">Check Tailscale</button>
+              <a href="https://tailscale.com/download" target="_blank" class="btn-secondary" style="padding:6px 16px;font-size:13px;text-decoration:none;">Install Tailscale</a>
+              <button class="btn-secondary" id="addDockBtn" onclick="addToDock()" style="padding:6px 16px;font-size:13px;display:none;">Add HQ to Dock</button>
+            </div>
+          </div>
+
+          <div class="step-card mb-4" style="border-color:rgba(168,85,247,0.15);">
+            <h3 class="text-base font-semibold text-white mb-1">Voice</h3>
+            <p class="text-xs text-zinc-500 mb-3">Talk to your AI and hear it respond</p>
+            <div class="space-y-3">
+              <div>
+                <label class="text-sm text-zinc-400 mb-1 block">Text-to-Speech engine</label>
+                <select id="ttsEngine">
+                  <option value="">Skip — no voice for now</option>
+                  <option value="voxtral">Voxtral (free, runs locally)</option>
+                  <option value="elevenlabs">ElevenLabs (cloud, $5+/mo)</option>
+                </select>
+              </div>
+              <div id="groqSection" class="hidden">
+                <label class="text-sm text-zinc-400 mb-1 block">Groq API Key <span class="text-zinc-600">(speech-to-text — free at <a href="https://console.groq.com" target="_blank" class="text-orange-400 underline">console.groq.com</a>)</span></label>
+                <input type="text" id="groqKey" placeholder="gsk_...">
+              </div>
+              <div id="elevenSection" class="hidden">
+                <label class="text-sm text-zinc-400 mb-1 block">ElevenLabs API Key</label>
+                <input type="text" id="elevenKey" placeholder="Paste from elevenlabs.io">
+                <label class="text-sm text-zinc-400 mb-1 block mt-2">Voice ID <span class="text-zinc-600">(optional)</span></label>
+                <input type="text" id="elevenVoice" placeholder="Default voice if blank">
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button class="btn" onclick="saveRemoteAndFinish()">Save & Open HQ</button>
+            <button class="btn-secondary" onclick="skipToHQ()">Skip remaining &rarr;</button>
+          </div>
+        </div>
+
+        <!-- Final done screen -->
+        <div id="doneSection" class="hidden fade-in">
+          <div class="rounded-2xl border border-green-500/20 bg-green-500/[0.04] p-8 text-center">
+            <div class="text-3xl mb-3">&#10003;</div>
+            <h3 class="text-xl font-bold text-white mb-2">You're all set!</h3>
+            <p class="text-zinc-400 mb-4" id="doneMessage">Mammals is running.</p>
+            <a href="/" class="btn">Open Mammals HQ</a>
+            <p class="text-xs text-zinc-600 mt-3">Configure remote access anytime from HQ Settings or at <code class="bg-white/5 px-1 rounded">/setup</code></p>
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)">
+              <p class="text-xs text-zinc-500 mb-2">Mammals is free. If you find it useful, consider supporting development.</p>
+              <a href="https://letsgodaemon.gumroad.com/l/mammals" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:7px 18px;border-radius:8px;background:rgba(249,115,22,0.12);color:#f97316;font-size:12px;font-weight:600;text-decoration:none;border:1px solid rgba(249,115,22,0.2);transition:all 0.2s">Support Mammals</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help chat widget -->
+  <button class="help-fab" id="helpFab" onclick="toggleHelp()" title="Ask a question">?</button>
+  <div class="help-panel" id="helpPanel">
+    <div class="help-header">
+      <div style="width:28px;height:28px;border-radius:8px;background:rgba(249,115,22,0.2);display:flex;align-items:center;justify-content:center;font-size:14px;color:#f97316;">?</div>
+      <div>
+        <div class="text-sm font-semibold text-white">Setup Help</div>
+        <div class="text-[10px] text-zinc-500">Ask anything about Mammals</div>
+      </div>
+    </div>
+    <div class="help-msgs" id="helpMsgs">
+      <div class="help-msg bot">Hey! I know everything about Mammals. Ask me anything — how it works, what you need, troubleshooting, whatever.</div>
+    </div>
+    <div class="help-input-wrap">
+      <input class="help-input" id="helpInput" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')sendHelp()">
+      <button class="help-send" id="helpSend" onclick="sendHelp()">&uarr;</button>
+    </div>
+  </div>
+
+  <script>
+    var config = {};
+    var TOTAL_STEPS = 4;
+    var currentStep = 1;
+    var helpOpen = false;
+
+    function openTerminal() {
+      fetch('/setup/open-terminal', {method:'POST'});
+    }
+
+    // Load existing config on page load
+    fetch('/setup/config').then(r=>r.json()).then(function(data){
+      if(data.config){
+        config = data.config;
+        if(config.BOT_OWNER) document.getElementById('ownerName').value = config.BOT_OWNER;
+        if(config.PWA_PIN) document.getElementById('hqPin').value = config.PWA_PIN;
+      }
+    });
+
+    // Run system check on load
+    fetch('/setup/check').then(r=>r.json()).then(function(data){
+      var html = '';
+      data.checks.forEach(function(c){
+        var icon = c.ok ? '<span class="check-ok">&#10003;</span>' : (c.warn ? '<span class="check-warn">&#9888;</span>' : '<span class="check-fail">&#10007;</span>');
+        html += '<div class="status-line">' + icon + ' <span class="' + (c.ok ? 'text-zinc-300' : c.warn ? 'text-yellow-400' : 'text-red-400') + '">' + c.label + '</span></div>';
+      });
+      document.getElementById('sysChecks').innerHTML = html;
+      var hasFailure = data.checks.some(function(c){ return !c.ok && !c.warn; });
+      document.getElementById('step1next').disabled = hasFailure;
+    });
+
+    function goStep(n) {
+      var prev = currentStep;
+      document.getElementById('step' + prev + 'body').className = 'step-body';
+      document.getElementById('step' + prev + 'card').className = 'step-card done mb-4';
+      document.getElementById('step' + prev + 'num').className = 'step-num done';
+      document.getElementById('step' + prev + 'num').innerHTML = '&#10003;';
+
+      currentStep = n;
+      document.getElementById('step' + n + 'body').className = 'step-body visible fade-in';
+      document.getElementById('step' + n + 'card').className = 'step-card active mb-4';
+      document.getElementById('step' + n + 'num').className = 'step-num active';
+      if(document.getElementById('step' + n + 'title')) document.getElementById('step' + n + 'title').className = 'font-semibold text-white';
+
+      var pct = Math.round(((n - 1) / TOTAL_STEPS) * 100);
+      document.getElementById('currentStep').textContent = n;
+      document.getElementById('progressPct').textContent = pct + '%';
+      document.getElementById('progressFill').style.width = pct + '%';
+
+      document.getElementById('step' + n + 'card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function checkClaude() {
+      var el = document.getElementById('claudeStatus');
+      el.innerHTML = '<div class="status-line"><span class="spinner"></span> Checking Claude Code...</div>';
+      fetch('/setup/check-claude').then(r=>r.json()).then(function(data){
+        if(data.installed && data.authed) {
+          el.innerHTML = '<div class="status-line"><span class="check-ok">&#10003;</span> <span class="text-zinc-300">Claude Code installed and authenticated (' + (data.version || '') + ')</span></div>';
+          document.getElementById('step2next').disabled = false;
+          // Show help chat FAB now that Claude is available
+          document.getElementById('helpFab').style.display = 'flex';
+        } else if(data.installed) {
+          el.innerHTML = '<div class="status-line"><span class="check-warn">&#9888;</span> <span class="text-yellow-400">Claude Code installed but not signed in</span></div>' +
+            '<div class="text-xs text-zinc-500 mt-1 ml-6">Run <code class="bg-white/5 px-1 rounded">claude login</code> in your terminal, then click "Check Again"</div>';
+        } else {
+          el.innerHTML = '<div class="status-line"><span class="check-fail">&#10007;</span> <span class="text-red-400">Claude Code not found</span></div>';
+        }
+      });
+    }
+
+    function runBuild() {
+      config.BOT_OWNER = document.getElementById('ownerName').value;
+      config.PWA_PIN = document.getElementById('hqPin').value;
+
+      if(!config.BOT_OWNER) { alert('Please enter your name.'); return; }
+
+      var log = document.getElementById('buildLog');
+      var btn = document.getElementById('buildBtn');
+      btn.disabled = true;
+      btn.textContent = 'Building...';
+
+      log.innerHTML = '<div class="status-line"><span class="spinner"></span> Saving configuration...</div>';
+
+      fetch('/setup/save', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({config: config})
+      }).then(r=>r.json()).then(function(data){
+        if(!data.ok) { log.innerHTML += '<div class="status-line check-fail">Error: ' + (data.error||'unknown') + '</div>'; btn.disabled=false; btn.textContent='Retry'; return; }
+        log.innerHTML += '<div class="status-line"><span class="check-ok">&#10003;</span> Configuration saved</div>';
+        log.innerHTML += '<div class="status-line"><span class="spinner"></span> Building TypeScript...</div>';
+
+        return fetch('/setup/build', {method:'POST'});
+      }).then(r=>r.json()).then(function(data){
+        if(!data.ok) { log.innerHTML += '<div class="status-line check-fail">Build error: ' + (data.error||'unknown') + '</div>'; btn.disabled=false; btn.textContent='Retry'; return; }
+        log.innerHTML += '<div class="status-line"><span class="check-ok">&#10003;</span> Build complete</div>';
+        log.innerHTML += '<div class="status-line"><span class="spinner"></span> Installing background service...</div>';
+
+        return fetch('/setup/install-service', {method:'POST'});
+      }).then(r=>r.json()).then(function(data){
+        if(data.ok) {
+          log.innerHTML += '<div class="status-line"><span class="check-ok">&#10003;</span> Background service installed</div>';
+        } else {
+          log.innerHTML += '<div class="status-line"><span class="check-warn">&#9888;</span> Service install skipped — start manually with <code class="mono text-xs">npm start</code></div>';
+        }
+
+        document.getElementById('progressPct').textContent = '100%';
+        document.getElementById('progressFill').style.width = '100%';
+
+        document.getElementById('buildActions').className = 'hidden';
+        document.getElementById('remotePrompt').className = 'fade-in';
+      });
+    }
+
+    function showRemoteSetup() {
+      document.getElementById('remotePrompt').className = 'hidden';
+      document.getElementById('remoteSetup').className = 'fade-in';
+      checkTailscale();
+
+      // Wire up TTS select
+      document.getElementById('ttsEngine').addEventListener('change', function(){
+        var v = this.value;
+        document.getElementById('groqSection').className = (v === 'voxtral' || v === 'elevenlabs') ? '' : 'hidden';
+        document.getElementById('elevenSection').className = v === 'elevenlabs' ? '' : 'hidden';
+      });
+    }
+
+    function checkTailscale() {
+      var el = document.getElementById('tailscaleStatus');
+      el.innerHTML = '<div class="status-line"><span class="spinner"></span> Checking Tailscale...</div>';
+      fetch('/setup/check-tailscale').then(r=>r.json()).then(function(data){
+        if(data.connected) {
+          var url = 'http://' + data.ip + ':5067';
+          el.innerHTML = '<div class="status-line"><span class="check-ok">&#10003;</span> <span class="text-zinc-300">Connected — IP: <code class="mono text-xs text-orange-400">' + data.ip + '</code></span></div>' +
+            '<div class="text-xs text-zinc-500 mt-1 ml-6">Access HQ at <code class="bg-white/5 px-1 rounded">' + url + '</code></div>';
+          config.TAILSCALE_IP = data.ip;
+
+          // Generate QR code for phone
+          var qrEl = document.getElementById('tailscaleQR');
+          try {
+            var qr = qrcode(0, 'M');
+            qr.addData(url);
+            qr.make();
+            qrEl.innerHTML =
+              '<div class="rounded-xl border border-orange-500/15 bg-white p-4 inline-block">' +
+                qr.createImgTag(4, 0) +
+              '</div>' +
+              '<div class="mt-2">' +
+                '<p class="text-sm text-zinc-300 font-medium">Scan with your phone to open HQ</p>' +
+                '<p class="text-xs text-zinc-500 mt-1">In Safari, tap <strong class="text-zinc-400">Share</strong> then <strong class="text-zinc-400">Add to Home Screen</strong> to install it like an app.</p>' +
+              '</div>';
+            qrEl.className = 'mb-4 fade-in';
+          } catch(e) {}
+
+          // Show dock button
+          document.getElementById('addDockBtn').style.display = '';
+        } else {
+          el.innerHTML = '<div class="status-line"><span class="text-zinc-500">&#8212;</span> <span class="text-zinc-500">Not detected — install it and click Check again</span></div>';
+          document.getElementById('tailscaleQR').className = 'hidden';
+        }
+      });
+    }
+
+    function addToDock() {
+      fetch('/setup/add-to-dock', {method:'POST'}).then(r=>r.json()).then(function(data){
+        var btn = document.getElementById('addDockBtn');
+        if(data.ok) {
+          btn.textContent = 'Added to Dock!';
+          btn.disabled = true;
+          btn.style.borderColor = 'rgba(34,197,94,0.3)';
+          btn.style.color = '#22c55e';
+        } else {
+          btn.textContent = 'Could not add';
+        }
+      });
+    }
+
+    function saveRemoteAndFinish() {
+      // Gather remote config
+      var token = document.getElementById('botToken').value;
+      if(token) config.TELEGRAM_BOT_TOKEN = token;
+      var tts = document.getElementById('ttsEngine').value;
+      if(tts) config.TTS_ENGINE = tts;
+      var groq = document.getElementById('groqKey').value;
+      if(groq) config.GROQ_API_KEY = groq;
+      var eKey = document.getElementById('elevenKey').value;
+      if(eKey) config.ELEVENLABS_API_KEY = eKey;
+      var eVoice = document.getElementById('elevenVoice').value;
+      if(eVoice) config.ELEVENLABS_VOICE_ID = eVoice;
+
+      // Save updated config
+      fetch('/setup/save', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({config: config})
+      }).then(r=>r.json()).then(function(){
+        skipToHQ();
+      });
+    }
+
+    function toggleHelp() {
+      var panel = document.getElementById('helpPanel');
+      var fab = document.getElementById('helpFab');
+      helpOpen = !helpOpen;
+      if(helpOpen) {
+        panel.style.display = 'flex';
+        fab.classList.add('has-panel');
+        fab.textContent = '×';
+        document.getElementById('helpInput').focus();
+      } else {
+        panel.style.display = 'none';
+        fab.classList.remove('has-panel');
+        fab.textContent = '?';
+      }
+    }
+
+    function sendHelp() {
+      var input = document.getElementById('helpInput');
+      var q = input.value.trim();
+      if(!q) return;
+
+      var msgs = document.getElementById('helpMsgs');
+      var sendBtn = document.getElementById('helpSend');
+
+      // Show user message
+      var userMsg = document.createElement('div');
+      userMsg.className = 'help-msg user';
+      userMsg.textContent = q;
+      msgs.appendChild(userMsg);
+      input.value = '';
+      input.disabled = true;
+      sendBtn.disabled = true;
+
+      // Show typing indicator
+      var typing = document.createElement('div');
+      typing.className = 'help-msg bot typing';
+      typing.textContent = 'Thinking...';
+      msgs.appendChild(typing);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      fetch('/setup/ask', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question: q})
+      }).then(r=>r.json()).then(function(data){
+        msgs.removeChild(typing);
+        var botMsg = document.createElement('div');
+        botMsg.className = 'help-msg bot';
+        botMsg.textContent = data.answer || 'Sorry, I couldn\'t get an answer. Make sure Claude Code is running.';
+        msgs.appendChild(botMsg);
+        msgs.scrollTop = msgs.scrollHeight;
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+      }).catch(function(){
+        msgs.removeChild(typing);
+        var errMsg = document.createElement('div');
+        errMsg.className = 'help-msg bot';
+        errMsg.textContent = 'Connection error. Is the setup server still running?';
+        msgs.appendChild(errMsg);
+        input.disabled = false;
+        sendBtn.disabled = false;
+      });
+    }
+
+    function skipToHQ() {
+      document.getElementById('remotePrompt').className = 'hidden';
+      document.getElementById('remoteSetup').className = 'hidden';
+
+      document.getElementById('progressPct').textContent = '100%';
+      document.getElementById('progressFill').style.width = '100%';
+
+      document.getElementById('doneMessage').textContent = 'Mammals is running for ' + config.BOT_OWNER + '.';
+      document.getElementById('doneSection').className = 'fade-in';
+
+      document.getElementById('step4card').className = 'step-card done mb-4';
+      document.getElementById('step4num').className = 'step-num done';
+      document.getElementById('step4num').innerHTML = '&#10003;';
+    }
+  </script>
+</body>
+</html>
