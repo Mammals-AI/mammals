@@ -9,7 +9,7 @@ Usage:
 Examples:
   python3 log-error.py "mink" "Published to WordPress instead of Astro" "Should publish to Astro/Cloudflare Pages"
   python3 log-error.py "main-bot" "Gave outdated info about site stack" "Should have checked current state first"
-  python3 log-error.py "bull" "Tried to trade on Binance.US" "Should use Kraken as primary exchange"
+  python3 log-error.py "bull" "Tried to trade on Exchange" "Should use Kraken as primary exchange"
 """
 
 import json

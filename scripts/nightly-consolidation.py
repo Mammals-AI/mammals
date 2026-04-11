@@ -15,7 +15,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-SESSIONS_DIR = Path.home() / ".claude" / "projects" / "-Users-ginovarisano-claudeclaw"
+SESSIONS_DIR = Path.home() / ".claude" / "projects" / "MAMMALS_PROJECT_DIR"
 DB_PATH = Path.home() / "claudeclaw" / "store" / "claudeclaw.db"
 NOTES_DIR = Path.home() / "claudeclaw" / "daily-notes"
 
@@ -126,7 +126,7 @@ def build_consolidation_prompt(conversations, existing_memories):
     """Build the prompt for Claude to analyze today's conversations."""
     convo_text = ""
     for i, msg in enumerate(conversations):
-        role_label = "Gino" if msg["role"] == "user" else "Mammals"
+        role_label = "User" if msg["role"] == "user" else "Mammals"
         convo_text += f"{role_label}: {msg['text']}\n\n"
 
     # Cap the conversation text

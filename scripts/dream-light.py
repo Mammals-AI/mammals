@@ -117,7 +117,7 @@ def run_triage(conversations, goals, existing_memories):
     """Use Claude to triage recent conversations for important memories."""
     convo_text = ""
     for msg in conversations[-100:]:  # Last 100 messages max
-        role = "Gino" if msg["role"] == "user" else "Mammals"
+        role = "User" if msg["role"] == "user" else "Mammals"
         text = msg["content"][:300]
         convo_text += f"{role}: {text}\n"
 
@@ -140,7 +140,7 @@ EXISTING MEMORIES (don't duplicate these):
 {memory_text}
 
 Flag memories that are:
-1. Decisions or commitments Gino made
+1. Decisions or commitments the user made
 2. New facts about projects, tools, or preferences
 3. Information referenced multiple times (important by repetition)
 4. Things related to active goals

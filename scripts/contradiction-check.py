@@ -6,8 +6,8 @@ Checks a new statement against existing memories and knowledge graph facts
 to detect conflicts. Can be called mid-conversation or during consolidation.
 
 Usage:
-  python3 contradiction-check.py "Gino uses Coinbase for trading"
-  → Would flag: conflicts with existing fact "Gino trades on Binance.US"
+  python3 contradiction-check.py "the user uses Coinbase for trading"
+  → Would flag: conflicts with existing fact "the user trades on Exchange"
 
   python3 contradiction-check.py --batch  (reads stdin, one statement per line)
 """
@@ -114,8 +114,8 @@ Respond in EXACTLY this JSON format (no markdown):
 
 Rules:
 - Only flag GENUINE contradictions, not just related info
-- "Gino uses Binance" and "Gino uses Coinbase" IS a contradiction if they claim different primary exchanges
-- "Gino likes crypto" and "Gino trades BTC" is NOT a contradiction — just related info
+- "the user uses Binance" and "the user uses Coinbase" IS a contradiction if they claim different primary exchanges
+- "the user likes crypto" and "the user trades BTC" is NOT a contradiction — just related info
 - If no contradiction, return has_contradiction: false with empty contradicted_items
 """
 

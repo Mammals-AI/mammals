@@ -3,7 +3,7 @@
 Knowledge Graph Engine — PARA Method for Mammals.
 
 PARA = Projects, Areas, Resources, Archive
-- Projects: Active work with a deadline or goal (crypto-bot, notion templates, etc.)
+- Projects: Active work with a deadline or goal (service-b, notion templates, etc.)
 - Areas: Ongoing responsibilities with no end date (solar setup, trading, home lab)
 - Resources: Reference material and tools (MCP servers, APIs, scripts)
 - Archive: Completed or inactive items
@@ -248,16 +248,16 @@ def graph_summary():
     }
 
 
-# ─── Seed with Gino's existing knowledge ───
+# ─── Seed with User's existing knowledge ───
 
 def seed_initial_graph():
-    """Populate the knowledge graph with known entities from Gino's setup."""
+    """Populate the knowledge graph with known entities from User's setup."""
     print("\n=== Seeding Knowledge Graph ===\n")
 
     # PROJECTS (active work with goals)
     projects = [
         ("claudeclaw", "Telegram AI assistant — the bot itself", {"port": 5075, "path": "~/claudeclaw/"}),
-        ("crypto-bot", "Automated crypto trading bot on Binance.US", {"port": 5051, "path": "~/crypto-bot/"}),
+        ("service-b", "Automated crypto trading bot on Exchange", {"port": 5051, "path": "~/service-b/"}),
         ("notion-templates", "Notion template marketplace business", {"status": "submitted to marketplace"}),
     ]
 
@@ -271,7 +271,7 @@ def seed_initial_graph():
 
     # RESOURCES (reference material and tools)
     resources = [
-        ("binance-us", "Crypto exchange — API via ccxt", {"type": "exchange"}),
+        ("exchange", "Crypto exchange — API via ccxt", {"type": "exchange"}),
         ("coingecko-mcp", "CoinGecko MCP for crypto data", {"type": "mcp"}),
         ("duckdb-mcp", "DuckDB MCP for SQL queries on local data", {"type": "mcp"}),
         ("notion-mcp", "Notion MCP for workspace access", {"type": "mcp"}),
@@ -297,8 +297,8 @@ def seed_initial_graph():
 
     # Relations
     print("\nRelations:")
-    add_relation("crypto-bot", "binance-us", "uses")
-    add_relation("crypto-bot", "trading", "part_of")
+    add_relation("service-b", "exchange", "uses")
+    add_relation("service-b", "trading", "part_of")
     add_relation("claudeclaw", "notion-mcp", "uses")
     add_relation("claudeclaw", "canva-mcp", "uses")
     add_relation("claudeclaw", "puppeteer-mcp", "uses")
@@ -312,7 +312,7 @@ def seed_initial_graph():
     add_relation("content-creation", "gemini-api", "uses")
     add_relation("content-creation", "canva-mcp", "uses")
     add_relation("trading", "coingecko-mcp", "uses")
-    add_relation("trading", "binance-us", "uses")
+    add_relation("trading", "exchange", "uses")
     add_relation("ai-tools", "claudeclaw", "includes")
     add_relation("home-infrastructure", "mac-mini", "includes")
     add_relation("home-infrastructure", "solar-assistant", "includes")
@@ -323,12 +323,12 @@ def seed_initial_graph():
     add_fact("claudeclaw", "Has 15 named agents: wolf, fox, bull, coyote, ferret, hound, jaguar, lynx, mink, mole, otter, panther, rabbit, badger, bison", "system")
     add_fact("claudeclaw", "Memory system: SQLite with semantic/episodic sectors, FTS5, salience decay", "system")
     add_fact("claudeclaw", "Brain V2: knowledge graph, tacit knowledge, proactive intelligence, nightly consolidation", "system")
-    add_fact("crypto-bot", "Uses ccxt library, must force IPv4 for Binance.US", "system")
-    add_fact("crypto-bot", "Has swing bot, dip bot, and grid bot strategies", "system")
+    add_fact("service-b", "Uses ccxt library, must force IPv4 for Exchange", "system")
+    add_fact("service-b", "Has swing bot, dip bot, and grid bot strategies", "system")
     add_fact("notion-templates", "8 templates total, all submitted to Notion Marketplace", "project")
     add_fact("notion-templates", "Marketplace profile: notion.so/@gvarisano", "project")
-    add_fact("trading", "Gino trades crypto actively on Binance.US", "observation")
-    add_fact("mac-mini", "Apple Silicon, runs all services, Tailscale IP: 100.73.175.93", "system")
+    add_fact("trading", "User trades crypto", "observation")
+    add_fact("mac-mini", "Apple Silicon, runs all services, Tailscale IP: 127.0.0.1", "system")
 
     summary = graph_summary()
     print(f"\n=== Graph seeded: {summary['entities']} entities, {summary['relations']} relations, {summary['facts']} facts ===")

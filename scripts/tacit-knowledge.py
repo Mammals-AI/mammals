@@ -2,12 +2,12 @@
 """
 Tacit Knowledge Tracker for Mammals.
 
-Analyzes conversation patterns to learn Gino's implicit preferences
+Analyzes conversation patterns to learn User's implicit preferences
 and habits without being explicitly told. Runs as part of nightly
 consolidation or on-demand.
 
 What it tracks:
-- Time-of-day patterns (when does Gino usually ask about crypto? projects?)
+- Time-of-day patterns (when does the user usually ask about crypto? projects?)
 - Topic sequences (does he always check X before Y?)
 - Communication preferences (how long are his messages? voice vs text?)
 - Tool/approach preferences (which tools does he prefer?)
@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 DB_PATH = Path.home() / "claudeclaw" / "store" / "claudeclaw.db"
-SESSIONS_DIR = Path.home() / ".claude" / "projects" / "-Users-ginovarisano-claudeclaw"
+SESSIONS_DIR = Path.home() / ".claude" / "projects" / "MAMMALS_PROJECT_DIR"
 
 
 def get_conn():
@@ -126,7 +126,7 @@ def analyze_patterns(all_messages):
             period = "morning" if peak < 12 else "afternoon" if peak < 17 else "evening" if peak < 21 else "late night"
             patterns.append({
                 "type": "time_preference",
-                "description": f"Gino tends to work on {topic} in the {period} (peak hour: {peak}:00)",
+                "description": f"the user tends to work on {topic} in the {period} (peak hour: {peak}:00)",
                 "evidence": f"Seen {len(hours)} times, avg hour {avg_hour:.1f}, peak at {peak}:00",
                 "confidence": min(0.3 + len(hours) * 0.1, 0.95),
             })
@@ -141,14 +141,14 @@ def analyze_patterns(all_messages):
         if short_msgs / len(lengths) > 0.7:
             patterns.append({
                 "type": "communication_style",
-                "description": "Gino strongly prefers short, direct messages (avg {:.0f} chars)".format(avg_len),
+                "description": "the user strongly prefers short, direct messages (avg {:.0f} chars)".format(avg_len),
                 "evidence": f"{short_msgs}/{len(lengths)} messages under 50 chars",
                 "confidence": 0.8,
             })
         elif long_msgs / len(lengths) > 0.3:
             patterns.append({
                 "type": "communication_style",
-                "description": "Gino often sends detailed messages (avg {:.0f} chars)".format(avg_len),
+                "description": "the user often sends detailed messages (avg {:.0f} chars)".format(avg_len),
                 "evidence": f"{long_msgs}/{len(lengths)} messages over 200 chars",
                 "confidence": 0.7,
             })
@@ -160,14 +160,14 @@ def analyze_patterns(all_messages):
         if voice_count > text_count:
             patterns.append({
                 "type": "input_preference",
-                "description": "Gino prefers voice messages over typing",
+                "description": "the user prefers voice messages over typing",
                 "evidence": f"{voice_count} voice vs {text_count} text messages",
                 "confidence": min(0.5 + (voice_count / len(all_messages)) * 0.5, 0.95),
             })
         elif voice_count == 0:
             patterns.append({
                 "type": "input_preference",
-                "description": "Gino exclusively uses text — never voice",
+                "description": "the user exclusively uses text — never voice",
                 "evidence": f"{text_count} text, 0 voice messages",
                 "confidence": 0.7,
             })
@@ -196,7 +196,7 @@ def analyze_patterns(all_messages):
         if count >= 3:
             patterns.append({
                 "type": "recurring_interest",
-                "description": f"Gino frequently asks about '{word}' ({count} times recently)",
+                "description": f"the user frequently asks about '{word}' ({count} times recently)",
                 "evidence": f"Keyword '{word}' appeared in {count} separate requests",
                 "confidence": min(0.4 + count * 0.1, 0.9),
             })

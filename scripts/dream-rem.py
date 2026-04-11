@@ -200,12 +200,12 @@ ACTIVE GOALS:
 
 Synthesize 3-7 dream insights. Each should be something NOT already captured in a single memory — it should emerge from connecting dots across multiple sources. Types of insights:
 
-- **trajectory**: "Gino has been shifting focus from X to Y" (observed over time)
+- **trajectory**: "the user has been shifting focus from X to Y" (observed over time)
 - **correlation**: "When X happens, Y tends to follow" (pattern across events)
-- **principle**: "Gino values X over Y in decisions" (inferred from behavior)
+- **principle**: "the user values X over Y in decisions" (inferred from behavior)
 - **risk**: "X might become a problem because..." (early warning)
 - **opportunity**: "Given X and Y, there's an opening for Z"
-- **identity**: "Gino is becoming someone who..." (growth/change observation)
+- **identity**: "the user is becoming someone who..." (growth/change observation)
 
 Respond in raw JSON only (no markdown):
 {{

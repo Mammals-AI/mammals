@@ -2,11 +2,11 @@
 """
 Unified Heartbeat Monitor for Mammals.
 
-Single-loop system check that monitors all of Gino's infrastructure.
+Single-loop system check that monitors all of User's infrastructure.
 Silence by default — only reports when something needs attention.
 
 Checks:
-- Service health (crypto-bot, solar dashboard, mission control)
+- Service health (service-b, solar dashboard, mission control)
 - Disk space
 - Memory usage
 - Database health
@@ -29,8 +29,8 @@ DB_PATH = Path.home() / "claudeclaw" / "store" / "claudeclaw.db"
 
 # ─── Service definitions ───
 SERVICES = [
-    {"name": "Crypto Bot", "port": 5051, "host": "127.0.0.1"},
-    {"name": "Solar Dashboard", "port": 5050, "host": "127.0.0.1"},
+    {"name": "Service B", "port": 5051, "host": "127.0.0.1"},
+    {"name": "Service A", "port": 5050, "host": "127.0.0.1"},
     {"name": "Mission Control", "port": 5075, "host": "127.0.0.1"},
 ]
 
@@ -192,7 +192,7 @@ def check_network():
     # Tailscale
     try:
         result = subprocess.run(
-            ["ping", "-c", "1", "-W", "2", "100.73.175.93"],
+            ["ping", "-c", "1", "-W", "2", "127.0.0.1"],
             capture_output=True, text=True, timeout=5,
         )
         checks["tailscale"] = result.returncode == 0

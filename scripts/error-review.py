@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 
 LOG_PATH = Path.home() / "claudeclaw" / "store" / "error-log.jsonl"
-MEMORY_DIR = Path.home() / ".claude" / "projects" / "-Users-ginovarisano-claudeclaw" / "memory"
+MEMORY_DIR = Path.home() / ".claude" / "projects" / "MAMMALS_PROJECT_DIR" / "memory"
 ARCHIVE_DIR = Path.home() / "claudeclaw" / "store" / "error-archive"
 
 

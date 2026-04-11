@@ -15,7 +15,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-SESSIONS_DIR = Path.home() / ".claude" / "projects" / "-Users-ginovarisano-claudeclaw"
+SESSIONS_DIR = Path.home() / ".claude" / "projects" / "MAMMALS_PROJECT_DIR"
 DB_PATH = Path.home() / "claudeclaw" / "store" / "claudeclaw.db"
 NOTES_DIR = Path.home() / "claudeclaw" / "daily-notes"
 CHECKPOINT_PATH = Path.home() / "claudeclaw" / "store" / "convo-checkpoint.json"
@@ -114,7 +114,7 @@ def summarize_conversation(messages, session_label):
     """Use Claude to generate a brief summary of the conversation chunk."""
     convo_text = ""
     for msg in messages:
-        label = "Gino" if msg["role"] == "user" else "Mammals"
+        label = "User" if msg["role"] == "user" else "Mammals"
         convo_text += f"{label}: {msg['text']}\n\n"
 
     if len(convo_text) > 12000:

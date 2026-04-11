@@ -336,7 +336,7 @@ Hybrid search combining keyword matching (SQLite FTS5) with vector similarity (O
 |  |                     |  |                    |   |
 |  | "I prefer dark mode"|  | "Yesterday we      |   |
 |  | "Always use Astro"  |  |  deployed the site"|   |
-|  | "My name is Gino"   |  | "Fixed the CSS bug"|   |
+|  | "My name is User"   |  | "Fixed the CSS bug"|   |
 |  +--------------------+  +--------------------+   |
 |                                                    |
 |  Each memory has:                                  |

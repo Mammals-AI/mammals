@@ -4,9 +4,9 @@ Escalation Tiers — Updates all named agent system prompts with
 a standardized escalation protocol (Felix-inspired).
 
 Tier 1: Agent handles silently (routine tasks, monitoring)
-Tier 2: Agent handles + notifies Gino (notable findings, completed tasks)
+Tier 2: Agent handles + notifies the user (notable findings, completed tasks)
 Tier 3: Agent escalates to main Mammals (needs tools/context it doesn't have)
-Tier 4: Escalate to Gino directly (decisions, money, destructive actions)
+Tier 4: Escalate to the user directly (decisions, money, destructive actions)
 """
 
 import sqlite3
@@ -28,7 +28,7 @@ TIER 1 — Handle silently:
 TIER 2 — Handle + notify:
 - Found something notable or time-sensitive
 - Completed a significant task
-- Discovered something Gino should know about
+- Discovered something the user should know about
 → Do the work, then include a brief heads-up in your response.
 
 TIER 3 — Escalate to main agent:
@@ -37,12 +37,12 @@ TIER 3 — Escalate to main agent:
 - You're uncertain about the right approach
 → Say: "I need to escalate this because [reason]"
 
-TIER 4 — Escalate to Gino:
+TIER 4 — Escalate to the user:
 - Anything involving spending money
 - Destructive actions (deleting, overwriting)
 - Security-sensitive decisions
 - You're genuinely stuck and need human judgment
-→ Say: "This needs Gino's call because [reason]"
+→ Say: "This needs User's call because [reason]"
 
 Default to the LOWEST tier that fits. When in doubt between tiers, go one tier up.
 ---"""

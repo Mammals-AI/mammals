@@ -96,8 +96,8 @@ def get_recent_outcomes(limit=5):
 def get_service_health():
     """Quick check of key services."""
     services = {
-        "crypto-bot": 5051,
-        "solar-dashboard": 5050,
+        "service-b": 5051,
+        "service-a": 5050,
         "command-center": 5075,
         "x402-service": 4021,
     }

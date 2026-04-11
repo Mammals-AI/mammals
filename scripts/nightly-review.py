@@ -259,7 +259,7 @@ def build_review_prompt(today_note, follow_ups, tasks, agents, system_status=Non
 
     context_parts = []
 
-    context_parts.append(f"HUMAN INTERACTIONS TODAY: {convo_count} messages from Gino via Telegram")
+    context_parts.append(f"HUMAN INTERACTIONS TODAY: {convo_count} messages from the user via Telegram")
 
     # Add initiative/outcome data
     init_summary = get_initiative_summary()
@@ -274,7 +274,7 @@ def build_review_prompt(today_note, follow_ups, tasks, agents, system_status=Non
     # Add knowledge gap candidates
     gap_candidates = get_knowledge_gap_candidates()
     if gap_candidates:
-        context_parts.append("POTENTIAL KNOWLEDGE GAP SIGNALS (questions/confusion from Gino today):\n" +
+        context_parts.append("POTENTIAL KNOWLEDGE GAP SIGNALS (questions/confusion from the user today):\n" +
                            "\n".join(f"  - {q}" for q in gap_candidates))
 
     if today_note:
@@ -316,10 +316,10 @@ Respond in EXACTLY this JSON format (no markdown, no code blocks):
   "agent_notes": "Any observations about agent performance or suggestions (or null if nothing notable)",
   "system_health": "Brief note on system health based on task results (or 'All good' if nothing notable)",
   "skill_notes": "Any skill files that need updating based on today's usage, or new skills worth documenting (or null)",
-  "knowledge_gaps_detected": ["Short description of any new knowledge gaps noticed in Gino's questions today (or empty array)"]
+  "knowledge_gaps_detected": ["Short description of any new knowledge gaps noticed in User's questions today (or empty array)"]
 }}
 
-Keep it casual and useful — this is for Gino, not a corporate report.
+Keep it casual and useful — this is for the user, not a corporate report.
 """
 
 

@@ -2,7 +2,7 @@
 """
 Proactive Intelligence Engine for Mammals.
 
-Evaluates triggers and surfaces relevant info before Gino asks.
+Evaluates triggers and surfaces relevant info before the user asks.
 Integrates with: CoinGecko (crypto prices), heartbeat (system health),
 knowledge graph (project status), tacit knowledge (timing preferences).
 
@@ -352,7 +352,7 @@ def eval_opportunity_trigger(config):
             pass
 
     elif opp_type == "trending_topic":
-        # Check if any of Gino's content topics are trending
+        # Check if any of User's content topics are trending
         keywords = config.get("keywords", [])
         if not keywords:
             return None
@@ -446,7 +446,7 @@ def eval_opportunity_trigger(config):
 
             threshold = config.get("threshold_pct", 30)
             if change_pct >= threshold:
-                return f"Traffic spike: SHU clicks up {change_pct:.0f}% week-over-week ({recent_clicks} vs {prev_clicks})"
+                return f"Traffic spike: Site clicks up {change_pct:.0f}% week-over-week ({recent_clicks} vs {prev_clicks})"
         except Exception:
             pass
 
@@ -523,13 +523,13 @@ def seed_default_triggers():
         "notify", cooldown_minutes=120,
     )
     create_trigger(
-        "crypto-bot-down", "condition",
-        {"check": "service_down", "port": 5051, "service_name": "Crypto Bot"},
+        "service-b-down", "condition",
+        {"check": "service_down", "port": 5051, "service_name": "Service B"},
         "notify", cooldown_minutes=30,
     )
     create_trigger(
-        "solar-dashboard-down", "condition",
-        {"check": "service_down", "port": 5050, "service_name": "Solar Dashboard"},
+        "service-a-down", "condition",
+        {"check": "service_down", "port": 5050, "service_name": "Service A"},
         "notify", cooldown_minutes=30,
     )
     create_trigger(
@@ -545,8 +545,8 @@ def seed_default_triggers():
         "notify", cooldown_minutes=60,
     )
     create_trigger(
-        "shu-site-down", "condition",
-        {"check": "web_health", "url": "https://smarthomeunlocked.com", "service_name": "Smart Home Unlocked"},
+        "site-down", "condition",
+        {"check": "web_health", "url": "https://example.com", "service_name": "Example Site"},
         "notify", cooldown_minutes=60,
     )
 
@@ -579,7 +579,7 @@ def seed_default_triggers():
     )
     create_trigger(
         "bnb-big-move", "opportunity",
-        {"type": "price_move", "coin": "binancecoin", "move_percent": 5},
+        {"type": "price_move", "coin": "bitcoin", "move_percent": 5},
         "initiative", cooldown_minutes=360,
     )
     create_trigger(
@@ -594,16 +594,16 @@ def seed_default_triggers():
     )
     create_trigger(
         "crypto-trending", "opportunity",
-        {"type": "trending_topic", "keywords": ["bitcoin", "ethereum", "solana", "binancecoin"]},
+        {"type": "trending_topic", "keywords": ["bitcoin", "ethereum", "solana", "bitcoin"]},
         "initiative", cooldown_minutes=720,
     )
     create_trigger(
-        "shu-seo-opportunity", "opportunity",
+        "site-seo-opportunity", "opportunity",
         {"type": "site_ranking"},
         "initiative", cooldown_minutes=1440,
     )
     create_trigger(
-        "shu-traffic-spike", "opportunity",
+        "site-traffic-spike", "opportunity",
         {"type": "traffic_spike", "threshold_pct": 30},
         "notify", cooldown_minutes=1440,
     )
@@ -633,12 +633,12 @@ def create_initiative_from_trigger(trigger_name, message, config=None):
 
         # Map trigger names to goals
         TRIGGER_GOAL_MAP = {
-            "crypto-bot-down": "dc8f0148",      # Maintain system health
-            "solar-dashboard-down": "dc8f0148",  # Maintain system health
+            "service-b-down": "dc8f0148",      # Maintain system health
+            "service-a-down": "dc8f0148",  # Maintain system health
             "chrome-cdp-down": "dc8f0148",       # Maintain system health
             "monitor-down": "dc8f0148",          # Maintain system health
             "solar-assistant-down": "dc8f0148",  # Maintain system health
-            "shu-site-down": "34efb41c",         # Make $100 in revenue
+            "site-down": "34efb41c",         # Make $100 in revenue
             "disk-watch": "dc8f0148",            # Maintain system health
             # Opportunity triggers
             "btc-big-move": "760ff422",          # Support crypto trading
@@ -646,8 +646,8 @@ def create_initiative_from_trigger(trigger_name, message, config=None):
             "eth-big-move": "760ff422",          # Support crypto trading
             "gumroad-sale": "34efb41c",          # Make $100 in revenue
             "crypto-trending": "760ff422",       # Support crypto trading
-            "shu-seo-opportunity": "34efb41c",   # Make $100 in revenue
-            "shu-traffic-spike": "34efb41c",     # Make $100 in revenue
+            "site-seo-opportunity": "34efb41c",   # Make $100 in revenue
+            "site-traffic-spike": "34efb41c",     # Make $100 in revenue
         }
 
         goal_id = TRIGGER_GOAL_MAP.get(trigger_name)
